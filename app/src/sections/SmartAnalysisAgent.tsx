@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Building2, TrendingUp, MapPin, ArrowRight, Factory, Truck, Search, X, Loader2, Fuel, Lightbulb, Route, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Building2, TrendingUp, MapPin, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as echarts from 'echarts';
 
@@ -19,175 +17,7 @@ import { generateCargoFlowAnalysis, clearCache as clearCargoFlowCache, getCached
 import { generateLoadingEfficiencyAnalysis, clearCache as clearLoadingEfficiencyCache, getCachedAnalysis as getLoadingEfficiencyCachedAnalysis } from '@/services/loadingEfficiencyApi';
 import { generateEnterpriseAnalysis, clearCache as clearEnterpriseCache, getCachedAnalysis as getEnterpriseCachedAnalysis } from '@/services/enterpriseApi';
 
-// 【实现需求：虚拟企业数据，包含上下游运输量、趟次数、月度数据和趋势分析】
-interface Enterprise {
-  id: string;
-  name: string;
-  upstreamVolume: number;
-  downstreamVolume: number;
-  upstreamTrips: number;
-  downstreamTrips: number;
-  upstreamPartners: { name: string; volume: number; trips: number }[];
-  downstreamPartners: { name: string; volume: number; trips: number }[];
-  monthlyData: {
-    months: string[];
-    upstreamTrips: number[];
-    downstreamTrips: number[];
-  };
-  trendAnalysis: string[];
-}
 
-const MOCK_ENTERPRISES: Enterprise[] = [
-  {
-    id: '1',
-    name: '宁武集团德盛煤业',
-    upstreamVolume: 12500,
-    downstreamVolume: 28600,
-    upstreamTrips: 312,
-    downstreamTrips: 715,
-    upstreamPartners: [
-      { name: '山西煤炭运销集团', volume: 5200, trips: 130 },
-      { name: '大同煤矿集团', volume: 4500, trips: 112 },
-      { name: '阳泉煤业集团', volume: 2800, trips: 70 },
-    ],
-    downstreamPartners: [
-      { name: '昌盛煤气化公司', volume: 8600, trips: 215 },
-      { name: '河北钢铁集团', volume: 7200, trips: 180 },
-      { name: '天津港煤炭码头', volume: 6800, trips: 170 },
-      { name: '山东魏桥创业集团', volume: 6000, trips: 150 },
-    ],
-    monthlyData: {
-      months: ['2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01', '2025-02'],
-      upstreamTrips: [18, 22, 28, 32, 35, 28, 25, 22, 30, 38, 20, 14],
-      downstreamTrips: [45, 52, 68, 75, 82, 70, 65, 58, 72, 88, 48, 32],
-    },
-    trendAnalysis: [
-      '冬季供暖季（11月-次年2月）下游趟次显著上升，与北方采暖需求高度相关',
-      '夏季（6-8月）运输量相对平稳，主要受工业用电需求支撑',
-      '春节前后（1-2月）运输量明显下降，受假期停工影响',
-      '整体呈现明显的季节性波动特征，与煤炭行业周期性一致',
-    ],
-  },
-  {
-    id: '2',
-    name: '青岛中集冷藏箱制造',
-    upstreamVolume: 8600,
-    downstreamVolume: 15200,
-    upstreamTrips: 215,
-    downstreamTrips: 380,
-    upstreamPartners: [
-      { name: '宝钢集团', volume: 3200, trips: 80 },
-      { name: '河北钢铁集团', volume: 2800, trips: 70 },
-      { name: '青岛普朗德电气', volume: 2600, trips: 65 },
-    ],
-    downstreamPartners: [
-      { name: '海尔集团', volume: 4200, trips: 105 },
-      { name: '美的集团', volume: 3800, trips: 95 },
-      { name: '青岛港物流', volume: 3600, trips: 90 },
-      { name: '顺丰冷链', volume: 3600, trips: 90 },
-    ],
-    monthlyData: {
-      months: ['2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01', '2025-02'],
-      upstreamTrips: [12, 15, 18, 20, 22, 20, 18, 16, 14, 12, 10, 8],
-      downstreamTrips: [28, 32, 38, 42, 45, 40, 35, 30, 26, 22, 18, 14],
-    },
-    trendAnalysis: [
-      '上半年（3-7月）运输量持续攀升，与出口订单季节性增长相关',
-      '下半年（8-12月）逐步回落，受海外需求放缓影响',
-      '春节前后（1-2月）处于全年低谷，生产线停工检修',
-      '整体趋势与家电出口周期高度吻合',
-    ],
-  },
-  {
-    id: '3',
-    name: '广东中烟工业湛江卷烟厂',
-    upstreamVolume: 6200,
-    downstreamVolume: 9800,
-    upstreamTrips: 155,
-    downstreamTrips: 245,
-    upstreamPartners: [
-      { name: '益锋粮油', volume: 2800, trips: 70 },
-      { name: '云南烟草集团', volume: 2200, trips: 55 },
-      { name: '贵州中烟', volume: 1200, trips: 30 },
-    ],
-    downstreamPartners: [
-      { name: '广东省烟草公司', volume: 4200, trips: 105 },
-      { name: '深圳市烟草公司', volume: 2800, trips: 70 },
-      { name: '广州市烟草公司', volume: 2800, trips: 70 },
-    ],
-    monthlyData: {
-      months: ['2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01', '2025-02'],
-      upstreamTrips: [10, 12, 13, 14, 13, 12, 14, 15, 16, 18, 12, 6],
-      downstreamTrips: [18, 20, 22, 24, 22, 20, 23, 25, 28, 32, 20, 11],
-    },
-    trendAnalysis: [
-      '春节前（12月-1月）运输量达到峰值，与节日备货需求相关',
-      '春节后（2月）急剧下降，市场需求进入短暂调整期',
-      '全年运输相对平稳，波动幅度较小，体现烟草行业稳定性',
-      '下半年整体略高于上半年，与中秋国庆双节备货有关',
-    ],
-  },
-  {
-    id: '4',
-    name: '惠州市新骏宏鞋业',
-    upstreamVolume: 3200,
-    downstreamVolume: 5800,
-    upstreamTrips: 80,
-    downstreamTrips: 145,
-    upstreamPartners: [
-      { name: '福建皮革厂', volume: 1200, trips: 30 },
-      { name: '浙江纺织集团', volume: 1000, trips: 25 },
-      { name: '广东橡胶厂', volume: 1000, trips: 25 },
-    ],
-    downstreamPartners: [
-      { name: '佳联迅物流仓库', volume: 2200, trips: 55 },
-      { name: '深圳华强北批发商', volume: 1800, trips: 45 },
-      { name: '广州鞋城', volume: 1800, trips: 45 },
-    ],
-    monthlyData: {
-      months: ['2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01', '2025-02'],
-      upstreamTrips: [5, 6, 7, 8, 7, 6, 7, 8, 9, 10, 4, 3],
-      downstreamTrips: [10, 12, 14, 16, 14, 12, 14, 16, 18, 20, 8, 5],
-    },
-    trendAnalysis: [
-      '下半年（9-12月）运输量明显高于上半年，与秋冬鞋类旺季相关',
-      '夏季（6-8月）相对平稳，凉鞋需求与原材料供应形成平衡',
-      '春节前后（1-2月）大幅下降，工厂放假及物流停运影响显著',
-      '整体呈现明显的淡旺季交替特征',
-    ],
-  },
-  {
-    id: '5',
-    name: '河北钢铁集团唐山分公司',
-    upstreamVolume: 28600,
-    downstreamVolume: 32400,
-    upstreamTrips: 572,
-    downstreamTrips: 648,
-    upstreamPartners: [
-      { name: '澳大利亚铁矿石', volume: 12000, trips: 240 },
-      { name: '巴西淡水河谷', volume: 8600, trips: 172 },
-      { name: '山西焦炭集团', volume: 8000, trips: 160 },
-    ],
-    downstreamPartners: [
-      { name: '中国建筑集团', volume: 12000, trips: 240 },
-      { name: '上海汽车集团', volume: 8600, trips: 172 },
-      { name: '美的集团', volume: 6800, trips: 136 },
-      { name: '格力电器', volume: 5000, trips: 100 },
-    ],
-    monthlyData: {
-      months: ['2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12', '2025-01', '2025-02'],
-      upstreamTrips: [38, 42, 48, 52, 55, 50, 48, 45, 52, 58, 42, 32],
-      downstreamTrips: [42, 48, 55, 60, 65, 58, 55, 50, 58, 65, 48, 36],
-    },
-    trendAnalysis: [
-      '春季（3-5月）运输量稳步上升，与基建开工季高度相关',
-      '夏季（6-8月）维持高位，房地产和制造业需求双重支撑',
-      '秋季（9-11月）再次攀升，年底工程赶工带动钢材需求',
-      '冬季（12-2月）明显回落，环保限产及工地停工影响',
-      '上游铁矿石进口波动与国际航运价格变化相关',
-    ],
-  },
-];
 
 // 【核心组件：Iframe 渲染器，用于安全地渲染大模型生成的 HTML】
 function IframeHtmlRenderer({ html, title }: { html: string; title: string }) {
@@ -275,7 +105,6 @@ function IframeHtmlRenderer({ html, title }: { html: string; title: string }) {
 
 export function SmartAnalysisAgent() {
   const [activeTab, setActiveTab] = useState('enterprise');
-  const [selectedEnterpriseId, setSelectedEnterpriseId] = useState<string>(MOCK_ENTERPRISES[0].id);
   
   // 【实现需求：货物流向分析状态管理】
   const [cargoFlowHtml, setCargoFlowHtml] = useState<string>('');
@@ -296,7 +125,6 @@ export function SmartAnalysisAgent() {
   const flowChartRef = useRef<HTMLDivElement>(null);
   const regionChartRef = useRef<HTMLDivElement>(null);
   const vehicleChartRef = useRef<HTMLDivElement>(null);
-  const mapFlowChartRef = useRef<HTMLDivElement>(null);
   const regionInteractionChartRef = useRef<HTMLDivElement>(null);
 
   // 【实现需求：货物流向分析图表初始化函数】
@@ -630,8 +458,6 @@ export function SmartAnalysisAgent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
-
-  const selectedEnterprise = MOCK_ENTERPRISES.find(e => e.id === selectedEnterpriseId);
 
   return (
     <div className="h-full flex flex-col">
