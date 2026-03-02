@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { callBailianAgent } from '@/services/bailianApi';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
   type: 'user' | 'bot';
   content: string;
   timestamp: Date;
-  data?: any;
 }
 
 const EXAMPLE_QUERIES = [
@@ -58,7 +59,6 @@ export function SmartQueryAgent() {
     setIsLoading(true);
     setShowExamples(false);
 
-    // 【实现需求：调用阿里云百炼真实 API 进行智能问答】
     try {
       const aiResponse = await callBailianAgent(input);
       const botResponse: Message = {
@@ -99,9 +99,9 @@ export function SmartQueryAgent() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <Card className="flex-1 flex flex-col bg-slate-900 border-slate-800">
-        <CardHeader className="border-b border-slate-800 pb-3">
+    <div className="h-full w-full flex flex-col p-4">
+      <Card className="flex-1 flex flex-col bg-slate-900 border-slate-800 overflow-hidden">
+        <CardHeader className="border-b border-slate-800 pb-3 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -124,7 +124,7 @@ export function SmartQueryAgent() {
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             <div className="space-y-4">
               {messages.map((message) => (
@@ -152,7 +152,9 @@ export function SmartQueryAgent() {
                         : 'bg-slate-800 text-slate-200'
                     }`}
                   >
-                    <pre className="whitespace-pre-wrap font-sans text-sm">{message.content}</pre>
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                    </div>
                     <span className="text-xs opacity-50 mt-1 block">
                       {message.timestamp.toLocaleTimeString()}
                     </span>
@@ -174,7 +176,7 @@ export function SmartQueryAgent() {
           </ScrollArea>
 
           {showExamples && (
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-slate-800 shrink-0">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-yellow-400" />
                 <span className="text-sm text-slate-400">您可以这样问：</span>
@@ -193,7 +195,7 @@ export function SmartQueryAgent() {
             </div>
           )}
 
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-4 border-t border-slate-800 shrink-0">
             <div className="flex gap-2">
               <Input
                 value={input}

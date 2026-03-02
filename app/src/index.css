@@ -73,3 +73,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .prose table {
+    @apply w-full border-collapse border border-slate-600 my-4;
+  }
+  .prose thead {
+    @apply bg-slate-800;
+  }
+  .prose th {
+    @apply border border-slate-600 px-4 py-2 text-left font-semibold text-slate-200;
+  }
+  .prose td {
+    @apply border border-slate-600 px-4 py-2 text-slate-300;
+  }
+  .prose tbody tr:nth-child(even) {
+    @apply bg-slate-800/50;
+  }
+  .prose tbody tr:hover {
+    @apply bg-slate-700/50;
+  }
+}
+
+/* 进度条加载动画 */
+@keyframes loading {
+  0% {
+    left: -30%;
+  }
+  50% {
+    left: 50%;
+  }
+  100% {
+    left: 100%;
+  }
+}

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Header } from './sections/Header';
 import { SmartQueryAgent } from './sections/SmartQueryAgent';
-import { DataDetailTable } from './sections/DataDetailTable';
 import { SmartAnalysisAgent } from './sections/SmartAnalysisAgent';
 import { FenceDrawer } from './sections/FenceDrawer';
+import { Toaster } from '@/components/ui/sonner';
 
 function App() {
   const [activeModule, setActiveModule] = useState('query');
@@ -12,15 +12,10 @@ function App() {
     <div className="min-h-screen bg-slate-950 flex flex-col">
       <Header activeModule={activeModule} onModuleChange={setActiveModule} />
       
-      <main className="flex-1 p-4 overflow-hidden">
+      <main className="flex-1 overflow-hidden">
         {activeModule === 'query' && (
-          <div className="h-full grid grid-cols-3 gap-4">
-            <div className="col-span-1">
-              <SmartQueryAgent />
-            </div>
-            <div className="col-span-2">
-              <DataDetailTable />
-            </div>
+          <div className="h-full w-full">
+            <SmartQueryAgent />
           </div>
         )}
         
@@ -28,6 +23,8 @@ function App() {
         
         {activeModule === 'fence' && <FenceDrawer />}
       </main>
+      
+      <Toaster />
     </div>
   );
 }
