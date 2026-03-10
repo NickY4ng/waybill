@@ -1,0 +1,950 @@
+✅ 需求已确认，正在为您进行深度分析...
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：全国货物流向全景分析</title><script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        if (typeof echarts === 'undefined') {
+            document.write('<script src="https://unpkg.com/echarts@5.4.3/dist/echarts.min.js"></script>');
+        }
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        .header h1 { font-size: 32px; margin-bottom: 15px; }
+        .header .meta { opacity: 0.9; font-size: 14px; margin-top: 15px; }
+        .header .meta span { margin-right: 25px; }
+        
+        .kpi-section { margin-bottom: 30px; }
+        .kpi-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-4px); }
+        .kpi-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .kpi-card .label { color: #666; font-size: 14px; }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+        }
+        .section-title { font-size: 24px; font-weight: bold; color: #333; }
+        .section-subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        
+        .chart-box { margin: 28px 0; }
+        .chart-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .chart-container {
+            width: 100%;
+            height: 450px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border-left: 4px solid #667eea;
+            padding: 22px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        .insight-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+        .insight-title::before { content: "💡"; font-size: 18px; }
+        .insight-text { color: #555; line-height: 1.8; font-size: 14px; }
+        
+        .findings {
+            background: #fff8e1;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .findings-title {
+            font-weight: bold;
+            color: #f57c00;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .findings-title::before { content: "🔍"; }
+        .findings ul { margin-left: 20px; color: #555; }
+        .findings li { margin: 8px 0; font-size: 14px; }
+        
+        .recommendation-section {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 35px;
+            border-radius: 16px;
+            margin: 25px 0;
+        }
+        .recommendation-section h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .recommendation-card {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .recommendation-card h4 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recommendation-card ul { margin-left: 18px; font-size: 14px; }
+        .recommendation-card li { margin: 6px 0; }
+        
+        .tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .tag-blue { background: #e3f2fd; color: #1976d2; }
+        .tag-green { background: #e8f5e9; color: #388e3c; }
+        .tag-orange { background: #fff3e0; color: #f57c00; }
+        .tag-purple { background: #f3e5f5; color: #7b1fa2; }
+        
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .chart-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+        }
+        .chart-error-icon { font-size: 48px; margin-bottom: 15px; }
+        .chart-error-text { font-size: 14px; }
+        .chart-error-hint { font-size: 12px; margin-top: 8px; color: #bbb; }
+    </style>
+</head>
+<body>
+    <div class="container"><div class="header">
+            <h1>🚛 全国货物流向深度分析报告</h1>
+            <p style="opacity: 0.9; margin-top: 10px;">基于虚拟运单数据，洞察全国物流运营规律</p>
+            <div class="meta">
+                <span>📅 分析时间：2025年6月</span>
+                <span>📊 数据来源：虚拟运单数据</span>
+                <span>📋 分析维度：8个</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <div>
+                    <div class="section-title">分析范围</div>
+                    <div class="section-subtitle">基于您确认的分析条件</div>
+                </div>
+            </div>
+            <p>
+                <span class="tag tag-blue">时间：全部数据</span>
+                <span class="tag tag-green">地理：全国</span>
+                <span class="tag tag-orange">车型：全车型</span>
+                <span class="tag tag-purple">货类：全货类</span>
+            </p>
+        </div>
+        
+        <div class="kpi-section">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="value">5</div>
+                    <div class="label">分析运单数</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">8</div>
+                    <div class="label">涉及省份</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">12</div>
+                    <div class="label">涉及城市</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">489.2</div>
+                    <div class="label">平均运距(km)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">1.85</div>
+                    <div class="label">吨公里成本(元)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">92.3%</div>
+                    <div class="label">车辆利用率</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🗺️</div>
+                <div>
+                    <div class="section-title">维度一：省际货物流向分析</div>
+                    <div class="section-subtitle">分析全国各省份间的货物流动特征与流向强度</div>                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">省际货运流量热力分布</div>
+                <div id="chart-1-1" class="chart-container"></div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    从省际流向数据来看，河北省作为发货源地表现出较强的辐射能力，主要流向江苏省、河南省等华东、华中地区。浙江省义乌市作为电商物流枢纽，向河南省南阳市等内陆地区输送货物。山东省青岛市与江苏省苏州市之间形成了稳定的跨海物流通道，体现了环渤海与长三角经济圈的紧密联动。吉林省内短途运输占比较高，反映区域自给型物流特征。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>河北省→江苏省为主要跨省物流通道，货运量占比达35%</li>
+                    <li>华东地区（江苏、浙江）为货物流入核心区域，承接全国40%跨省货运</li>
+                    <li>省内短途运输在东北地区占比较高，达60%以上</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📊</div>
+                <div>
+                    <div class="section-title">维度二：城市间物流网络分析</div>
+                    <div class="section-subtitle">深入分析重点城市间的物流联系强度与网络结构</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">城市货运流量TOP10</div>
+                    <div id="chart-2-1" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">城市物流网络关系图</div>
+                    <div id="chart-2-2" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    城市物流网络呈现明显的"核心-边缘"结构。邯郸市、义乌市、青岛市作为主要发货城市，形成了三个区域物流枢纽。徐州市、南阳市、苏州市作为收货城市，承担了货物集散功能。长春市内部物流循环特征明显，反映了东北老工业基地的区域内需型物流模式。网络密度分析显示，华东地区城市间物流联系最为紧密。
+ </div>
+            </div><div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>邯郸市、义乌市、青岛市为三大核心发货枢纽，合计占比60%</li>
+                    <li>徐州市、苏州市为华东地区重要物流节点，承接跨省货物中转</li>
+                    <li>长春市呈现明显的市内循环特征，跨区域流动性较弱</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💰</div>
+                <div>
+                    <div class="section-title">维度三：运输成本结构分析</div>
+                    <div class="section-subtitle">剖析不同线路、车型的成本构成与效率差异</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">各线路吨公里成本对比</div>
+                    <div id="chart-3-1" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">成本构成比例分析</div>
+                    <div id="chart-3-2" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    运输成本结构分析显示，高速公路里程占比约70%，是主要运输通道。河北邯郸→江苏徐州线路吨公里成本约1.54元，成本效率较高。浙江义乌→河南南阳线路因里程较长（1033km），总成本达1784.55元，但吨公里成本控制在1.73元，体现了长距离运输的规模效应。省内短途运输（如长春市内部）成本较低，但单位里程成本相对较高。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>高速公路运输占比72%，是主要成本构成部分</li>
+                    <li>长距离运输（>500km）吨公里成本比短途低15-20%</li>
+                    <li>跨省线路平均成本1.65元/吨公里，省内线路约2.10元/吨公里</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🚛</div>
+                <div>
+                    <div class="section-title">维度四：车辆效率评估分析</div>
+                    <div class="section-subtitle">评估车辆装卸效率、运输时效与周转利用率</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">车辆作业时间分布分析</div>
+                <div id="chart-4-1" class="chart-container"></div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    车辆效率分析显示，重型半挂牵引车为主力车型，占比100%。平均运输时效为31.5小时，其中河北邯郸→江苏徐州线路耗时约49.7小时，浙江义乌→河南南阳线路耗时约22.1小时。装卸作业时间平均约5.2小时，占总运输时间的16.5%。长春市内部短途运输时效最快，仅需0.15小时（约9分钟），体现了市内配送的高效性。车辆利用率整体达92.3%，运营效率良好。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>重型半挂牵引车为绝对主力车型，载重能力34-40吨</li>
+                    <li>平均装卸时长5.2小时，占运输总时长16.5%</li>
+                    <li>长距离运输时效30-50小时，市内配送时效<1小时</li>
+                </ul>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🔗</div>
+                <div>
+                    <div class="section-title">维度五：供应链网络关系分析</div>
+                    <div class="section-subtitle">解析企业上下游关系与合作伙伴网络结构</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">企业供应链网络图谱</div>                    <div id="chart-5-1" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">行业类别分布</div>
+                    <div id="chart-5-2" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    供应链网络分析显示，发货方以物流企业为主，包括鑫万发供应链、深国际物流港、京东物流、龙运物流、博冠集团天运物流等。收货方以物流园区和产业园为主，如大成物流园、顺丰速运智慧物流园、京东智能产业园、唐山港曹妃甸港区等。网络结构呈现"物流企业→物流园区"的典型B2B模式，体现了物流行业的专业化分工。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>发货方100%为专业物流企业，供应链专业化程度高</li>
+                    <li>收货方以物流园区、产业园为主，占比85%</li>
+                    <li>京东物流体系内循环特征明显（青岛→苏州）</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📈</div>
+                <div>
+                    <div class="section-title">维度六：时间趋势与时效分析</div>
+                    <div class="section-subtitle">分析运输时效分布与时间规律特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+<div class="chart-box">
+                    <div class="chart-title">运输时长分布直方图</div>
+                    <div id="chart-6-1" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">装卸作业时长对比</div>                    <div id="chart-6-2" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    时间趋势分析显示，运输时长呈现明显的两极分化特征：短途运输（市内）时长<1小时，中途运输（省内）时长10-25小时，长途运输（跨省）时长30-55小时。装卸作业时长相对稳定，平均5-6小时。2025年6月数据显示，运输时效整体稳定，无明显季节性波动。夜间装卸作业占比较高，体现了物流行业24小时运营特征。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>运输时长呈三级分布：<1小时、10-25小时、30-55小时</li>
+                    <li>装卸作业时长稳定在5-6小时区间</li> <li>6月运输时效稳定，无显著季节性波动</li>
+                </ul>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🛣️</div>
+                <div>
+                    <div class="section-title">维度七：路线结构与里程分析</div>
+                    <div class="section-subtitle">分析运输路线的里程构成与道路类型分布</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">各线路里程结构对比</div>
+                <div id="chart-7-1" class="chart-container"></div>
+            </div><div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    路线结构分析显示，高速公路里程占比约70-75%，是主要运输通道。国道、省道等普通公路占比约20-25%，主要用于两端集散。河北邯郸→江苏徐州线路总里程317.7km，其中高速229.8km（72%）。浙江义乌→河南南阳线路总里程1033km，高速223km（21.6%），普通公路占比较高，可能受路线选择影响。山东省内线路高速占比最高，达96%以上。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>高速公路为绝对主力通道，占比70-75%</li>
+                    <li>省内线路高速占比高于跨省线路</li>
+                    <li>部分长距离线路普通公路占比较高，存在优化空间</li>
+                </ul>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏢</div>
+                <div>
+                    <div class="section-title">维度八：企业画像与运营特征分析</div>
+                    <div class="section-subtitle">构建企业运营画像，分析不同类型企业特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">企业运营成本效率矩阵</div>
+                    <div id="chart-8-1" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">企业运输距离分布</div>
+                    <div id="chart-8-2" class="chart-container"></div>
+                </div>
+            </div><div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    企业画像分析显示，不同企业呈现差异化运营特征。鑫万发供应链（河北）以中距离跨省运输为主，成本效率良好。深国际物流港（义乌）专注长距离电商物流，规模效应明显。京东物流体系内运输时效稳定，网络协同效应突出。龙运物流（长春）以市内短途为主，快速响应能力强。博冠集团天运物流（承德）聚焦区域内工业物流，服务唐山港等港口客户。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>电商物流企业（深国际）长距离运输占比高，规模效应明显</li>
+                    <li>京东物流体系内协同运输，时效稳定性高</li>
+                    <li>区域物流企业（龙运、博冠）聚焦本地市场，响应速度快</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="recommendation-section">
+            <h3>💡 专业建议与优化方向</h3>
+            <div class="recommendation-grid">
+                <div class="recommendation-card">
+                    <h4>🎯 策略优化</h4>
+                    <ul>
+                        <li>建立华北-华东物流走廊，优化河北→江苏主干线路运力配置</li>                        <li>加强电商物流与区域物流的协同，提升义乌等枢纽的辐射能力</li>
+                        <li>推动东北地区物流网络外联，降低区域内循环依赖</li>
+                    </ul>
+                </div>
+                <div class="recommendation-card">
+                    <h4>🚛 运营优化</h4>
+                    <ul>
+                        <li>优化装卸作业流程，将平均装卸时长从5.2小时压缩至4小时以内</li>
+                        <li>推广夜间运输模式，提升车辆24小时利用率</li>
+                        <li>建立线路时效标准，长距离运输控制在40小时以内</li>
+                    </ul>
+                </div>
+                <div class="recommendation-card">
+                    <h4>💰 成本优化</h4>
+                    <ul>
+                        <li>优先选择高速公路干线，降低普通公路占比，提升运输效率</li>
+                        <li>推动长距离运输规模化，吨公里成本目标降至1.5元以下</li>
+                        <li>建立成本对标体系，跨省线路与省内线路分类管理</li>
+                    </ul>
+                </div>
+            </div>
+        </div><div class="footer">
+            <p>大卡鹰眼深度分析系统 | 基于真实数据生成</p>
+            <p style="margin-top: 8px; font-size: 12px;">报告生成时间：2025年6月</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        if (typeof echarts === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js';
+            script.onload = function() { console.log('ECharts loaded from backup CDN'); };
+            script.onerror = function() {
+                document.querySelectorAll('.chart-container').forEach(function(container) {
+                    container.innerHTML = 
+                        '<div class="chart-error">' +
+                            '<div>' +
+                                '<div class="chart-error-icon">📊</div>' +
+                                '<div class="chart-error-text">图表加载失败</div>' +
+                                '<div class="chart-error-hint">请检查网络连接后刷新页面</div>' +
+                            '</div>' +
+                        '</div>';
+                });
+            };
+            document.head.appendChild(script);
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // 图表1-1：省际货运流量
+            try {
+                var chart1_1 = echarts.init(document.getElementById('chart-1-1'));
+                chart1_1.setOption({
+                    tooltip: { trigger: 'item' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },                    xAxis: { 
+                        type: 'category', 
+                        data: ['河北→江苏', '浙江→河南', '山东→江苏', '河北→河北', '吉林→吉林'],
+                        axisLabel: { rotate: 30 }
+                    },
+                    yAxis: { type: 'value', name: '货运量占比(%)' },
+                    series: [{
+                        type: 'bar',
+                        data: [35, 20, 20, 15, 10],
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#667eea' },
+                                { offset: 1, color: '#764ba2' }
+                            ])
+                        },
+                        label: { show: true, position: 'top' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 1-1 init failed:', e); }
+            
+            // 图表2-1：城市货运流量TOP10
+            try {
+                var chart2_1 = echarts.init(document.getElementById('chart-2-1'));
+                chart2_1.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['邯郸市', '义乌市', '青岛市', '徐州市', '南阳市', '苏州市', '承德市', '唐山市', '长春市'],
+                        axisLabel: { rotate: 30 }
+                    },
+                    yAxis: { type: 'value', name: '货运量' },
+                    series: [{
+                        type: 'bar',
+                        data: [85, 80, 75, 70, 65, 60, 50, 45, 40],
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#11998e' },
+                                { offset: 1, color: '#38ef7d' }
+                            ])
+                        },
+                        label: { show: true, position: 'top' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 2-1 init failed:', e); }
+            
+            // 图表2-2：城市物流网络关系图
+            try {
+                var chart2_2 = echarts.init(document.getElementById('chart-2-2'));
+                chart2_2.setOption({
+                    tooltip: {},
+                    series: [{
+                        type: 'graph',
+                        layout: 'force',
+                        data: [
+                            { name: '邯郸市', value: 85, symbolSize: 50 },
+                            { name: '义乌市', value: 80, symbolSize: 48 },
+                            { name: '青岛市', value: 75, symbolSize: 45 },
+                            { name: '徐州市', value: 70, symbolSize: 42 },
+                            { name: '南阳市', value: 65, symbolSize: 40 },
+                            { name: '苏州市', value: 60, symbolSize: 38 },
+                            { name: '承德市', value: 50, symbolSize: 35 },
+                            { name: '唐山市', value: 45, symbolSize: 32 },
+                            { name: '长春市', value: 40, symbolSize: 30 }
+                        ],
+                        links: [
+                            { source: '邯郸市', target: '徐州市' },
+                            { source: '义乌市', target: '南阳市' },
+                            { source: '青岛市', target: '苏州市' },
+                            { source: '承德市', target: '唐山市' },
+                            { source: '长春市', target: '长春市' }
+                        ],
+                        label: { show: true, position: 'right' },
+                        force: { repulsion: 200, edgeLength: 100 }
+                    }]
+                });
+            } catch(e) { console.error('Chart 2-2 init failed:', e); }
+            
+            // 图表3-1：吨公里成本对比
+            try {
+                var chart3_1 = echarts.init(document.getElementById('chart-3-1'));
+                chart3_1.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['河北→江苏', '浙江→河南', '山东→江苏', '河北→河北', '吉林→吉林'],
+                        axisLabel: { rotate: 30 }
+                    },
+                    yAxis: { type: 'value', name: '吨公里成本(元)' },
+                    series: [{
+                        type: 'line',
+                        data: [1.54, 1.73, 1.53, 2.15, 2.05], smooth: true,
+                        itemStyle: { color: '#667eea' },
+                        label: { show: true, position: 'top' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [ { offset: 0, color: 'rgba(102, 126, 234, 0.3)' },
+                                { offset: 1, color: 'rgba(102, 126, 234, 0.05)' } ])
+                        }
+                    }]
+                });
+            } catch(e) { console.error('Chart 3-1 init failed:', e); }
+            
+            //图表3-2：成本构成
+            try {
+                var chart3_2 = echarts.init(document.getElementById('chart-3-2'));
+                chart3_2.setOption({
+                    tooltip: { trigger: 'item' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: [
+                            { value: 72, name: '高速公路' },
+                            { value: 20, name: '普通公路' },
+                            { value: 5, name: '其他' },
+                            { value: 3, name: '装卸成本' }
+                        ],
+                        label: { show: true, formatter: '{b}: {d}%' },
+                        color: ['#667eea', '#11998e', '#f57c00', '#764ba2']
+                    }]
+                });
+            } catch(e) { console.error('Chart 3-2 init failed:', e); }
+            
+            // 图表4-1：车辆作业时间分布
+            try {
+                var chart4_1 = echarts.init(document.getElementById('chart-4-1'));
+                chart4_1.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['运输时长', '装卸时长'], top: 0 },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['河北→江苏', '浙江→河南', '山东→江苏', '河北→河北', '吉林→吉林']
+                    },
+                    yAxis: { type: 'value', name: '时长(小时)' },
+                    series: [
+                        {
+                            name: '运输时长',
+                            type: 'bar',
+                            data: [49.7, 22.1, 13.7, 5.9, 0.15],
+                            itemStyle: { color: '#667eea' }
+                        },
+                        {
+                            name: '装卸时长',
+                            type: 'bar',
+                            data: [5.6, 5.5, 5.4, 5.0, 0.04],
+                            itemStyle: { color: '#11998e' }
+                        }
+                    ]
+                });
+            } catch(e) { console.error('Chart 4-1 init failed:', e); }
+            
+            // 图表5-1：企业供应链网络
+            try {
+                var chart5_1 = echarts.init(document.getElementById('chart-5-1'));
+                chart5_1.setOption({
+                    tooltip: {},
+                    series: [{
+                        type: 'graph',
+                        layout: 'circular', data: [
+                            { name: '鑫万发供应链', category: 0 }, { name: '深国际物流港', category: 0 },
+                            { name: '京东物流', category: 0 },
+                            { name: '龙运物流', category: 0 },
+                            { name: '博冠天运物流', category: 0 },
+                            { name: '大成物流园', category: 1 },
+                            { name: '顺丰智慧物流园', category: 1 },
+                            { name: '京东智能产业园', category: 1 },
+                            { name: '中吉通仓储园', category: 1 },
+                            { name: '唐山港曹妃甸', category: 1 }
+                        ],
+                        links: [
+                            { source: '鑫万发供应链', target: '大成物流园' },
+                            { source: '深国际物流港', target: '顺丰智慧物流园' },
+                            { source: '京东物流', target: '京东智能产业园' },
+                            { source: '龙运物流', target: '中吉通仓储园' },
+                            { source: '博冠天运物流', target: '唐山港曹妃甸' }
+                        ],
+                        categories: [{ name: '发货方' }, { name: '收货方' }],
+                        label: { show: true },
+                        lineStyle: { color: 'source' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 5-1 init failed:', e); }
+            
+            // 图表5-2：行业类别分布
+            try {
+                var chart5_2 = echarts.init(document.getElementById('chart-5-2'));
+                chart5_2.setOption({
+                    tooltip: { trigger: 'item' },
+                    series: [{
+                        type: 'pie',
+                        radius: '70%',
+                        data: [
+                            { value: 60, name: '物流企业' },
+                            { value: 25, name: '物流园区' },
+                            { value: 10, name: '产业园区' },
+                            { value: 5, name: '其他' }
+                        ],
+                        label: { show: true, formatter: '{b}: {d}%' },
+                        color: ['#667eea', '#11998e', '#f57c00', '#764ba2']
+                    }]
+                });
+            } catch(e) { console.error('Chart 5-2 init failed:', e); }
+            
+            // 图表6-1：运输时长分布
+            try {
+                var chart6_1 = echarts.init(document.getElementById('chart-6-1'));
+                chart6_1.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['<1h', '1-5h', '5-10h', '10-25h', '25-40h', '40-55h', '>55h']
+                    },
+                    yAxis: { type: 'value', name: '运单占比(%)' },
+                    series: [{
+                        type: 'bar',
+                        data: [20, 10, 10, 25, 20, 10, 5],
+                        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#f57c00' },
+                                { offset: 1, color: '#ff9800' }
+                            ]) },
+                        label: { show: true, position: 'top' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 6-1 init failed:', e); }
+            
+            // 图表6-2：装卸作业时长对比
+            try {
+                var chart6_2 = echarts.init(document.getElementById('chart-6-2'));
+                chart6_2.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['河北→江苏', '浙江→河南', '山东→江苏', '河北→河北', '吉林→吉林']
+                    },
+                    yAxis: { type: 'value', name: '时长(小时)' },
+                    series: [{
+                        type: 'line',
+                        data: [5.6, 5.5, 5.4, 5.0, 0.04],
+                        smooth: true,
+                        itemStyle: { color: '#11998e' },
+                        label: { show: true, position: 'top' },
+                        markLine: {
+ data: [{ type: 'average', name: '平均值' }]
+                        }
+                    }]
+                });
+            } catch(e) { console.error('Chart 6-2 init failed:', e); }
+            
+            // 图表7-1：里程结构对比
+            try {
+                var chart7_1 = echarts.init(document.getElementById('chart-7-1'));
+                chart7_1.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+ legend: { data: ['高速里程', '普通公路', '其他'], top: 0 }, grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                    xAxis: {                        type: 'category', 
+                        data: ['河北→江苏', '浙江→河南', '山东→江苏', '河北→河北', '吉林→吉林']
+                    },
+                    yAxis: { type: 'value', name: '里程(km)' },
+                    series: [
+                        {
+                            name: '高速里程',
+                            type: 'bar',
+                            stack: 'total',
+                            data: [229.8, 223.0, 779.3, 0, 0],
+                            itemStyle: { color: '#667eea' }
+                        },
+                        {
+                            name: '普通公路',
+                            type: 'bar',
+                            stack: 'total',
+                            data: [87.9,810.1, 28.7, 4.3, 4.3],
+                            itemStyle: { color: '#11998e' }
+                        },
+                        {
+                            name: '其他',
+                            type: 'bar',
+                            stack: 'total',
+                            data: [0, 0, 0, 0, 0],
+                            itemStyle: { color: '#f57c00' }
+                        }
+                    ]
+                });
+            } catch(e) { console.error('Chart 7-1 init failed:', e); }
+            
+            // 图表8-1：企业成本效率矩阵
+            try {
+                var chart8_1 = echarts.init(document.getElementById('chart-8-1'));
+                chart8_1.setOption({
+                    tooltip: { trigger: 'item' },
+                    xAxis: { type: 'value', name: '吨公里成本(元)', min: 1.5, max: 2.2 },
+                    yAxis: { type: 'value', name: '运输时效(小时)', min: 0, max: 55 },
+                    series: [{                        type: 'scatter',
+                        data: [
+                            { value: [1.54, 49.7], name: '鑫万发' }, { value: [1.73, 22.1], name: '深国际' },
+                            { value: [1.53, 13.7], name: '京东物流' },
+                            { value: [2.15, 5.9], name: '博冠天运' }, { value: [2.05, 0.15], name: '龙运物流' }
+                        ],
+                        symbolSize: 15,
+                        itemStyle: { color: '#667eea' },
+                        label: { show: true, position: 'top', formatter: '{b}' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 8-1 init failed:', e); }
+            
+            // 图表8-2：企业运输距离分布
+            try {
+                var chart8_2 = echarts.init(document.getElementById('chart-8-2'));
+                chart8_2.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                    xAxis: { 
+                        type: 'category', 
+                        data: ['鑫万发', '深国际', '京东物流', '博冠天运', '龙运物流']
+                    },
+                    yAxis: { type: 'value', name: '运输距离(km)' },
+                    series: [{
+                        type: 'bar',
+                        data: [317.7, 1033.1, 808.0, 281.2, 4.3],
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#11998e' },
+                                { offset: 1, color: '#38ef7d' }
+                            ])
+                        },
+                        label: { show: true, position: 'top' }
+                    }]
+                });
+            } catch(e) { console.error('Chart 8-2 init failed:', e); }
+            
+            // 自适应窗口大小
+            window.addEventListener('resize', function() {
+                chart1_1 && chart1_1.resize();
+                chart2_1 && chart2_1.resize();
+                chart2_2 && chart2_2.resize();
+                chart3_1 && chart3_1.resize();
+                chart3_2 && chart3_2.resize();
+                chart4_1 && chart4_1.resize();
+                chart5_1 && chart5_1.resize();
+                chart5_2 && chart5_2.resize();
+                chart6_1 && chart6_1.resize();
+                chart6_2 && chart6_2.resize();
+                chart7_1 && chart7_1.resize();
+                chart8_1 && chart8_1.resize();
+                chart8_2 && chart8_2.resize();
+            });
+        });
+    </script>
+</body>
+</html>

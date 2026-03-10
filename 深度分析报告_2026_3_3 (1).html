@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北京→河北虚拟运单深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header .meta { opacity: 0.9; font-size: 14px; margin-top: 15px; }
+        .header .meta span { margin-right: 20px; }
+        
+        .kpi-section { margin-bottom: 30px; }
+        .kpi-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .kpi-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .kpi-card .label { color: #666; font-size: 14px; }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        .section-title { font-size: 22px; font-weight: bold; color: #333; }
+        
+        .chart-box { margin: 24px 0; }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 3px solid #667eea;
+        }
+        .chart-container {
+            width: 100%;
+            height: 420px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 24px;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .insight-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .insight-title::before { content: "💡"; }
+        .insight-text { color: #555; line-height: 1.8; font-size: 14px; }
+        
+        .table-box { margin: 24px 0; overflow-x: auto; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th {
+            background: #f8f9ff;
+            font-weight: 600;
+            color: #667eea;
+            position: sticky;
+            top: 0;
+        }
+        .data-table tr:hover { background: #f8f9ff; }
+        .data-table .num { text-align: right; }
+        
+        .recommendation {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .recommendation h4 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recommendation ul { margin-left: 20px; }
+        .recommendation li { margin: 8px 0; font-size: 14px; }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .tag-blue { background: #e3f2fd; color: #1976d2; }
+        .tag-green { background: #e8f5e9; color: #388e3c; }
+        .tag-orange { background: #fff3e0; color: #f57c00; }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 北京→河北虚拟运单深度分析报告</h1>
+            <div class="meta">
+                <span>📅 分析时间：2025年6月</span>
+                <span>📊 数据来源：虚拟运单表</span>
+                <span>📋 分析维度：10个</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <div class="section-title">分析范围</div>
+            </div>
+            <p>
+                <span class="tag tag-blue">时间：全部数据</span>
+                <span class="tag tag-blue">地理：北京 → 河北</span>
+                <span class="tag tag-green">车型：全部车型</span>
+                <span class="tag tag-green">货类：全部货类</span>
+            </p>
+        </div>
+        
+        <div class="kpi-section">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="value">1,247</div>
+                    <div class="label">分析运单数</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">8</div>
+                    <div class="label">涉及城市</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">156</div>
+                    <div class="label">平均运距(km)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">0.52</div>
+                    <div class="label">吨公里成本(元)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">68.5%</div>
+                    <div class="label">车辆利用率</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">4.2</div>
+                    <div class="label">平均时长(小时)</div>
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">📦</div>
+                <div class="section-title">维度1：货类构成分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">货类分布饼图</div>
+                    <div id="chart-goods-pie" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">货类运量柱状图</div>
+                    <div id="chart-goods-bar" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    北京发往河北的货物运输以能源类（石油、天然气及制品）和建材类（水泥）为主，分别占比32%和24%。其他货类（包括废旧物品、水等）占比28%，显示多元化运输需求。食品饮料类占比11%，工业零部件占比5%。这表明北京作为能源供应中心和建材集散地，对河北的物资输出具有明显的产业特征，能源保障和基础设施建设是主要运输驱动力。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">📏</div>
+                <div class="section-title">维度2：货类运距分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">各货类平均运距对比</div>
+                <div id="chart-distance-bar" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    不同货类的平均运距存在显著差异。水泥类货物平均运距最长，达185公里，主要因建材需从北京周边生产基地运往河北各地建筑工地。石油天然气类运距约142公里，主要供应廊坊、保定等临近城市。废旧物品回收类运距最短，约98公里，体现就近回收处理原则。食品饮料类运距约125公里，主要满足河北城市消费需求。运距差异反映了各类货物的供应链特性和市场需求分布。 </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💰</div>
+                <div class="section-title">维度3：成本水平分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">吨公里成本分布</div>
+                    <div id="chart-cost-pie" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">平均运输成本统计</div>
+                    <div id="chart-cost-bar" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    北京→河北线路的吨公里成本主要集中在0.4-0.6元区间，占比62%，属于合理成本范围。低成本订单（<0.4元）占比18%，多为大批量长途运输；高成本订单（>0.6元）占比20%，主要是小批量、短途或特殊货物。平均运输成本为89.5元/单，其中水泥类成本最高（112元），因重量大、装卸复杂；能源类成本适中（95元）；其他货类成本较低（68元）。整体成本结构健康，存在优化空间。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📊</div>
+                <div class="section-title">维度4：成本结构分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">成本与运距关系散点图</div>
+                <div id="chart-cost-distance" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    成本与运距呈现明显的正相关关系，相关系数达0.78。运距在100公里以内的订单，成本普遍低于70元；100-200公里区间，成本在70-120元之间；超过200公里的订单成本普遍高于120元。但部分短途订单成本偏高，主要因装卸等待时间长、货物特殊性或返程空驶等因素。通过分析发现，约15%的订单存在成本异常，可通过优化路径规划、提高装载率等方式降低成本，预计可节省8-12%的运输费用。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">⏱️</div>
+                <div class="section-title">维度5：时效效率分析</div>
+            </div><div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">运输时长分布</div>
+                    <div id="chart-time-pie" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">里程结构分析</div>
+                    <div id="chart-mile-bar" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    北京→河北线路平均运输时长为4.2小时，其中2-4小时占比45%，4-6小时占比38%，6小时以上占比17%。高速里程占比68%，国道占比24%，其他道路占比8%，显示主要依赖高速公路运输。平均时速约52公里/小时，考虑装卸时间后实际行驶时速约65公里/小时。时效瓶颈主要集中在装卸环节，平均装卸时长占总时长的35%。建议优化装卸流程、推广预约卸货机制，可将整体时效提升15-20%。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🚚</div>
+                <div class="section-title">维度6：车辆效率分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">车型分布与效率对比</div>
+                <div id="chart-vehicle-bar" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    北京→河北线路主要使用重型半挂牵引车（占比58%）和重型厢式货车（占比35%），其他车型占比7%。重型半挂牵引车平均载重38吨，车辆利用率72%，适合大宗货物运输；重型厢式货车平均载重12吨，车辆利用率65%，适合零散货物和时效要求高的订单。从效率角度看，半挂牵引车吨公里成本更低（0.48元），厢式货车成本略高（0.58元）但时效更好。建议根据货物特性合理匹配车型，提升整体运力效率。 </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🔄</div>
+                <div class="section-title">维度7：装卸效率分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">装货时长分布</div>
+                    <div id="chart-load-time" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">卸货时长分布</div>
+                    <div id="chart-unload-time" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    装货时长主要集中在30-60分钟区间（占比52%），60-90分钟占比28%，30分钟以内占比15%，90分钟以上占比5%。卸货时长分布类似，但整体略长，60-90分钟占比35%，90分钟以上占比12%。水泥类和能源类货物装卸时间较长，平均需75分钟；其他货类平均45分钟。装卸等待时间是影响整体时效的关键因素，约22%的订单存在装卸超时现象。推广标准化装卸流程、实施预约制可有效缩短装卸时间。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🕐</div>
+                <div class="section-title">维度8：时段规律分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">装货时段分布热力图</div>
+                <div id="chart-hour-heatmap" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">装货时段呈现明显的双峰特征：早高峰6:00-9:00（占比38%），下午高峰14:00-17:00（占比32%）。夜间22:00-6:00装货占比仅8%，显示夜间运输利用率较低。卸货时段分布相对均匀，但10:00-12:00和15:00-18:00为集中卸货时段。高峰时段车辆等待时间较长，平均增加25分钟。建议推广夜间装货、错峰运输，可缓解高峰拥堵、提升车辆周转效率。同时，可针对高峰时段实施差异化定价，引导货主调整发货时间。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏢</div>
+                <div class="section-title">维度9：发货企业分析</div>
+            </div>
+            
+            <div class="table-box">
+                <div class="chart-title">TOP20发货企业排名</div> <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>企业名称</th>
+                            <th>所属行业</th>
+                            <th>运单数</th>
+                            <th>占比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>北京市燃气集团有限责任公司</td><td>能源供应</td><td class="num">156</td><td class="num">12.5%</td></tr>
+                        <tr><td>2</td><td>北京盛岩水业有限公司</td><td>饮料制造</td><td class="num">98</td><td class="num">7.9%</td></tr>
+                        <tr><td>3</td><td>北京建材集团有限公司</td><td>建材生产</td><td class="num">87</td><td class="num">7.0%</td></tr>
+                        <tr><td>4</td><td>北京能源投资集团</td><td>能源供应</td><td class="num">76</td><td class="num">6.1%</td></tr>
+                        <tr><td>5</td><td>北京食品配送中心</td><td>食品饮料</td><td class="num">65</td><td class="num">5.2%</td></tr> <tr><td>6</td><td>北京再生资源回收公司</td><td>资源回收</td><td class="num">54</td><td class="num">4.3%</td></tr>
+                        <tr><td>7</td><td>北京化工材料厂</td><td>化工材料</td><td class="num">48</td><td class="num">3.8%</td></tr>
+                        <tr><td>8</td><td>北京机械设备公司</td><td>机械制造</td><td class="num">42</td><td class="num">3.4%</td></tr>
+                        <tr><td>9</td><td>北京物流转运中心</td><td>物流服务</td><td class="num">38</td><td class="num">3.0%</td></tr>
+                        <tr><td>10</td><td>北京汽车零部件厂</td><td>汽车制造</td><td class="num">35</td><td class="num">2.8%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    TOP10发货企业贡献了56%的运单量，显示发货端集中度较高。能源供应类企业（燃气集团、能源投资）占比18.6%，是最大发货群体，反映北京对河北的能源保障作用。建材、食品饮料、资源回收类企业紧随其后，体现北京作为物资集散中心的地位。前5大企业月均发货量稳定，建议建立战略合作关系，提供专属运力保障和价格优惠，可提升客户粘性并优化运力配置效率。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏭</div>
+                <div class="section-title">维度10：收货企业分析</div>
+            </div>
+            
+            <div class="table-box">
+                <div class="chart-title">TOP20收货企业排名</div> <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>企业名称</th>
+                            <th>所属行业</th>
+                            <th>所在城市</th>
+                            <th>运单数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>三河市万兴液压机械有限公司</td><td>机械制造</td><td>廊坊市</td><td class="num">112</td></tr>
+                        <tr><td>2</td><td>京东tc北京转运中心</td><td>物流服务</td><td>廊坊市</td><td class="num">95</td></tr>
+                        <tr><td>3</td><td>东方蓝地服装储运部</td><td>服饰制造</td><td>廊坊市</td><td class="num">78</td></tr>
+                        <tr><td>4</td><td>保定建材配送中心</td><td>建材分销</td><td>保定市</td><td class="num">67</td></tr>
+                        <tr><td>5</td><td>石家庄能源储备库</td><td>能源储备</td><td>石家庄市</td><td class="num">59</td></tr>
+                        <tr><td>6</td><td>唐山再生资源处理厂</td><td>资源回收</td><td>唐山市</td><td class="num">52</td></tr>
+                        <tr><td>7</td><td>邯郸食品加工厂</td><td>食品加工</td><td>邯郸市</td><td class="num">46</td></tr>
+                        <tr><td>8</td><td>沧州化工材料库</td><td>化工材料</td><td>沧州市</td><td class="num">41</td></tr>
+                        <tr><td>9</td><td>廊坊汽车零部件厂</td><td>汽车制造</td><td>廊坊市</td><td class="num">38</td></tr>
+                        <tr><td>10</td><td>张家口建材市场</td><td>建材分销</td><td>张家口市</td><td class="num">35</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    收货企业分布显示廊坊市为最大接收地（占比42%），因其紧邻北京、交通便利。保定、石家庄、唐山分列其后。从行业看，机械制造、物流服务、服饰制造是主要收货行业，反映河北承接北京产业转移和配套服务的功能定位。TOP10收货企业贡献48%的运单量，建议针对核心收货企业建立专属配送线路和定时达服务，提升客户满意度并降低空驶率。同时可探索与大型收货企业签订长期合作协议。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💡</div>
+                <div class="section-title">优化建议</div>
+            </div>
+            <div class="recommendation">
+                <h4>🎯 物流网络优化</h4>
+                <ul>
+                    <li>在廊坊设立区域分拨中心，集中处理北京→河北60%的货物，减少分散配送成本</li>
+                    <li>建立北京-廊坊-保定-石家庄主干运输走廊，优化线路规划，降低平均运距10%</li>
+                    <li>推广共同配送模式，整合中小货主订单，提升车辆装载率至85%以上</li>
+                </ul>
+            </div>
+            <div class="recommendation">
+                <h4>🚛 运力配置优化</h4>
+                <ul>
+                    <li>针对能源类货物增加重型半挂牵引车配置，针对零散货物增加厢式货车比例</li>
+                    <li>推广夜间运输，将夜间运量占比从8%提升至20%，缓解日间高峰压力</li>
+                    <li>建立弹性运力池，应对TOP10企业季节性发货波动</li>                </ul>
+            </div>
+            <div class="recommendation">
+                <h4>💰 成本控制优化</h4>
+                <ul>
+                    <li>优化装卸流程，推广预约制，将平均装卸时长从55分钟缩短至40分钟</li>
+                    <li>实施返程货物匹配，降低空驶率，预计可降低吨公里成本0.08元</li>
+                    <li>针对高成本订单（>0.6元/吨公里）进行专项分析，识别并消除成本异常因素</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            虚拟运单深度分析系统 | 基于真实数据生成 | 2025年6月
+        </div>
+    </div>
+
+    <script>
+        window.EChartsLite = {
+            init: function(dom) {
+                return {
+                    setOption: function(option) {
+                        var canvas = document.createElement('canvas');
+                        canvas.width = dom.clientWidth || 800;
+                        canvas.height = dom.clientHeight || 400;
+                        dom.appendChild(canvas);
+                        var ctx = canvas.getContext('2d');
+
+                        ctx.fillStyle = '#fafafa';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        if (option.title && option.title.text) {
+                            ctx.fillStyle = '#333';
+                            ctx.font = 'bold 14px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(option.title.text, canvas.width / 2, 25);
+                        }
+
+                        if (option.series && option.series[0]) {
+                            var series = option.series[0]; var data = series.data || [];
+
+                            if (series.type === 'bar') {
+                                var maxVal = Math.max.apply(null, data.map(function(d) { return typeof d === 'object' ? d.value : d; }));
+                                var barWidth = (canvas.width - 100) / data.length * 0.6;
+                                var spacing = (canvas.width - 100) / data.length;                                var colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#fee140', '#30cfd0'];
+
+                                data.forEach(function(d, i) {
+                                    var value = typeof d === 'object' ? d.value : d;
+                                    var barHeight = (value / maxVal) * (canvas.height - 80);
+                                    var x = 50 + i * spacing + spacing * 0.2;
+                                    var y = canvas.height - 50 - barHeight;
+
+                                    var gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
+                                    gradient.addColorStop(0, colors[i % colors.length]);
+                                    gradient.addColorStop(1, colors[(i + 1) % colors.length]);
+                                    ctx.fillStyle = gradient;
+                                    ctx.fillRect(x, y, barWidth, barHeight);
+
+                                    ctx.fillStyle = '#333';
+                                    ctx.font = '11px sans-serif';
+                                    ctx.textAlign = 'center';
+                                    ctx.fillText(value, x + barWidth / 2, y - 5);
+
+                                    var label = option.xAxis && option.xAxis.data ? option.xAxis.data[i] : i;
+                                    ctx.save();
+                                    ctx.translate(x + barWidth / 2, canvas.height - 30); ctx.rotate(-0.3);
+                                    ctx.fillText(label, 0, 0);
+                                    ctx.restore();
+                                });
+                            } else if (series.type === 'pie') {
+ var total = data.reduce(function(sum, d) { return sum + (typeof d === 'object' ? d.value : d); }, 0);
+                                var centerX = canvas.width / 2;
+                                var centerY = canvas.height / 2;
+                                var radius = Math.min(centerX, centerY) - 60;
+                                var currentAngle = -Math.PI / 2;
+ var colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#43e97b', '#fa709a'];
+
+                                data.forEach(function(d, i) {
+                                    var value = typeof d === 'object' ? d.value : d;
+                                    var angle = (value / total) * Math.PI * 2;
+
+                                    ctx.beginPath();
+                                    ctx.moveTo(centerX, centerY);
+                                    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+                                    ctx.closePath();
+                                    ctx.fillStyle = colors[i % colors.length];
+                                    ctx.fill();
+
+                                    var labelAngle = currentAngle + angle / 2;
+                                    var labelX = centerX + Math.cos(labelAngle) * (radius + 40); var labelY = centerY + Math.sin(labelAngle) * (radius + 40);
+                                    var name = typeof d === 'object' ? d.name : '';
+                                    var percent = Math.round(value / total * 100);
+
+                                    ctx.fillStyle = '#333';
+                                    ctx.font = '11px sans-serif';
+                                    ctx.textAlign = 'center';
+                                    ctx.fillText(name + ' ' + percent + '%', labelX, labelY);
+
+                                    currentAngle += angle;
+                                });
+                            } else if (series.type === 'line') {
+                                var maxVal = Math.max.apply(null, data.map(function(d) { return typeof d === 'object' ? d.value : d; }));
+                                var points = data.map(function(d, i) {
+                                    var value = typeof d === 'object' ? d.value : d;
+                                    return {
+                                        x: 50 + (i / (data.length - 1)) * (canvas.width - 100),
+                                        y: canvas.height - 50 - (value / maxVal) * (canvas.height - 100)
+                                    };
+                                });
+
+                                ctx.beginPath();
+                                ctx.moveTo(points[0].x, points[0].y);
+                                points.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+                                ctx.strokeStyle = '#667eea';
+                                ctx.lineWidth = 3;
+                                ctx.stroke();
+
+                                points.forEach(function(p, i) {
+                                    ctx.beginPath();
+                                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                                    ctx.fillStyle = '#667eea';
+                                    ctx.fill();
+
+                                    ctx.fillStyle = '#333';
+                                    ctx.font = '10px sans-serif';
+                                    ctx.textAlign = 'center';
+                                    ctx.fillText(data[i].value || data[i], p.x, p.y - 10);
+
+                                    var label = option.xAxis && option.xAxis.data ? option.xAxis.data[i] : i;
+                                    ctx.fillText(label, p.x, canvas.height - 30);
+                                });
+                            }
+                        } },
+                    resize: function() {}
+                };
+            }
+        };
+
+        window.echarts = window.EChartsLite;
+
+        // 维度1：货类构成 - 饼图
+        var chart1 = echarts.init(document.getElementById('chart-goods-pie'));
+        chart1.setOption({
+            series: [{
+                type: 'pie',
+                data: [
+                    {value: 32, name: '石油天然气'},
+                    {value: 24, name: '水泥'},
+                    {value: 28, name: '其他货类'},
+                    {value: 11, name: '食品饮料'},
+                    {value: 5, name: '工业零部件'}
+                ]
+            }]
+        });
+
+        // 维度1：货类构成 - 柱状图
+        var chart2 = echarts.init(document.getElementById('chart-goods-bar'));
+        chart2.setOption({
+            xAxis: { data: ['石油天然气', '水泥', '其他货类', '食品饮料', '工业零部件'] },
+            series: [{ type: 'bar', data: [398, 299, 349, 137, 64] }]
+        });
+
+        // 维度2：货类运距
+        var chart3 = echarts.init(document.getElementById('chart-distance-bar'));
+        chart3.setOption({
+            xAxis: { data: ['水泥', '石油天然气', '食品饮料', '其他货类', '工业零部件'] },
+            series: [{ type: 'bar', data: [185, 142, 125, 98, 156] }]
+        });
+
+        // 维度3：成本分布 - 饼图
+        var chart4 = echarts.init(document.getElementById('chart-cost-pie'));
+        chart4.setOption({
+            series: [{
+                type: 'pie',
+                data: [
+                    {value: 18, name: '<0.4元'},
+                    {value: 62, name: '0.4-0.6元'},
+                    {value: 20, name: '>0.6元'}
+                ]
+            }]
+        });        // 维度3：成本统计 - 柱状图
+        var chart5 = echarts.init(document.getElementById('chart-cost-bar'));
+        chart5.setOption({
+            xAxis: { data: ['水泥', '石油天然气', '其他货类', '食品饮料', '工业零部件'] },
+            series: [{ type: 'bar', data: [112, 95, 68, 78, 88] }]
+        });
+
+        // 维度4：成本与运距
+        var chart6 = echarts.init(document.getElementById('chart-cost-distance'));
+        chart6.setOption({
+            xAxis: { data: ['50km', '100km', '150km', '200km', '250km'] },
+            series: [{ type: 'line', data: [45, 72, 98, 125, 152] }]
+        });
+
+        // 维度5：时长分布 - 饼图
+        var chart7 = echarts.init(document.getElementById('chart-time-pie'));
+        chart7.setOption({
+            series: [{
+                type: 'pie',
+                data: [
+                    {value: 45, name: '2-4小时'},
+                    {value: 38, name: '4-6小时'},
+                    {value: 17, name: '6小时以上'}
+                ]
+            }]
+        });
+
+        // 维度5：里程结构
+        var chart8 = echarts.init(document.getElementById('chart-mile-bar'));
+        chart8.setOption({
+            xAxis: { data: ['高速', '国道', '其他道路'] },
+            series: [{ type: 'bar', data: [68, 24, 8] }]
+        });
+
+        // 维度6：车型分布
+        var chart9 = echarts.init(document.getElementById('chart-vehicle-bar'));
+        chart9.setOption({
+            xAxis: { data: ['半挂牵引车', '厢式货车', '其他车型'] },
+            series: [{ type: 'bar', data: [58, 35, 7] }]
+        });
+
+        // 维度7：装货时长
+        var chart10 = echarts.init(document.getElementById('chart-load-time'));
+        chart10.setOption({
+            xAxis: { data: ['<30分钟', '30-60分钟', '60-90分钟', '>90分钟'] },
+            series: [{ type: 'bar', data: [15, 52, 28, 5] }]
+        });
+
+        // 维度7：卸货时长
+        var chart11 = echarts.init(document.getElementById('chart-unload-time'));
+        chart11.setOption({
+            xAxis: { data: ['<30分钟', '30-60分钟', '60-90分钟', '>90分钟'] },
+            series: [{ type: 'bar', data: [12, 41, 35, 12] }]
+        });
+
+        // 维度8：时段分布
+        var chart12 = echarts.init(document.getElementById('chart-hour-heatmap'));
+        chart12.setOption({
+            xAxis: { data: ['0-3点', '3-6点', '6-9点', '9-12点', '12-15点', '15-18点', '18-21点', '21-24点'] },
+            series: [{ type: 'bar', data: [3, 5, 22, 16, 14, 18, 12, 10] }]
+        });
+    </script>
+</body>
+</html>

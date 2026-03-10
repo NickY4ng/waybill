@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 蓝色科技风主题 - 白底 */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
+    
+    /* 自定义科技蓝变量 */
+    --tech-blue: 217 91% 60%;
+    --tech-blue-light: 213 94% 68%;
+    --tech-blue-dark: 224 76% 48%;
+    --tech-cyan: 188 94% 43%;
+    --tech-purple: 262 83% 58%;
+    --tech-gradient-start: 217 91% 60%;
+    --tech-gradient-end: 188 94% 43%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root {
+    @apply h-full;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer components {
+  /* 科技风卡片 */
+  .tech-card {
+    @apply bg-white rounded-xl border border-slate-200/60 shadow-sm;
+    @apply hover:shadow-md hover:border-blue-200 transition-all duration-300;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  }
+  
+  /* 科技风按钮 */
+  .tech-button {
+    @apply bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium;
+    @apply hover:from-blue-600 hover:to-cyan-600 transition-all duration-300;
+    @apply shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40;
+  }
+  
+  /* 科技风输入框 */
+  .tech-input {
+    @apply bg-white border-slate-200 rounded-xl;
+    @apply focus:border-blue-400 focus:ring-2 focus:ring-blue-100;
+    @apply transition-all duration-200;
+  }
+  
+  /* 科技风标签 */
+  .tech-badge {
+    @apply px-3 py-1 rounded-full text-xs font-medium;
+    @apply bg-blue-50 text-blue-600 border border-blue-100;
+  }
+  
+  /* 渐变文字 */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent;
+  }
+  
+  /* 玻璃态效果 */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/20;
+  }
+  
+  /* 科技风分隔线 */
+  .tech-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent;
+  }
+  
+  /* 发光效果 */
+  .glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+  
+  .glow-strong {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.25);
+  }
+
+  /* Markdown 样式 - 紧凑版 */
+  .prose {
+    @apply text-slate-700 text-sm;
+  }
+  .prose p {
+    @apply my-1.5 leading-normal;
+  }
+  .prose p:first-child {
+    @apply mt-0;
+  }
+  .prose p:last-child {
+    @apply mb-0;
+  }
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    @apply font-semibold text-slate-800 my-2;
+  }
+  .prose h1 {
+    @apply text-base;
+  }
+  .prose h2 {
+    @apply text-sm;
+  }
+  .prose h3, .prose h4 {
+    @apply text-xs;
+  }
+  .prose ul, .prose ol {
+    @apply my-1.5 pl-4;
+  }
+  .prose li {
+    @apply my-0.5;
+  }
+  .prose li > p {
+    @apply my-0.5;
+  }
+  .prose code {
+    @apply bg-slate-100 text-slate-700 px-1 py-0 rounded text-xs font-mono;
+  }
+  .prose pre {
+    @apply bg-slate-900 text-slate-100 p-2 rounded-lg overflow-x-auto my-2 text-xs;
+  }
+  .prose pre code {
+    @apply bg-transparent text-slate-100 p-0;
+  }
+  .prose blockquote {
+    @apply border-l-2 border-blue-300 pl-3 italic text-slate-600 my-2 text-xs;
+  }
+  .prose a {
+    @apply text-blue-600 hover:text-blue-700 underline;
+  }
+  .prose strong {
+    @apply font-semibold text-slate-800;
+  }
+  .prose em {
+    @apply text-slate-600;
+  }
+  .prose hr {
+    @apply my-3 border-slate-200;
+  }
+  
+  /* 用户消息中的 Markdown 样式（白色文字） */
+  .prose.prose-invert {
+    @apply text-white;
+  }
+  .prose.prose-invert h1, .prose.prose-invert h2, .prose.prose-invert h3, .prose.prose-invert h4 {
+    @apply text-white;
+  }
+  .prose.prose-invert code {
+    @apply bg-white/20 text-white;
+  }
+  .prose.prose-invert pre {
+    @apply bg-slate-800/50 text-white;
+  }
+  .prose.prose-invert pre code {
+    @apply bg-transparent text-white;
+  }
+  .prose.prose-invert blockquote {
+    @apply border-blue-300/50 text-white/80;
+  }
+  .prose.prose-invert a {
+    @apply text-blue-200 hover:text-white;
+  }
+  .prose.prose-invert strong {
+    @apply text-white;
+  }
+  
+  /* Markdown表格样式 */
+  .prose table {
+    @apply w-full border-collapse border border-slate-200 my-4 rounded-lg overflow-hidden;
+  }
+  .prose thead {
+    @apply bg-gradient-to-r from-blue-50 to-cyan-50;
+  }
+  .prose th {
+    @apply border border-slate-200 px-4 py-3 text-left font-semibold text-slate-700;
+  }
+  .prose td {
+    @apply border border-slate-200 px-4 py-3 text-slate-600;
+  }
+  .prose tbody tr:nth-child(even) {
+    @apply bg-slate-50/50;
+  }
+  .prose tbody tr:hover {
+    @apply bg-blue-50/50;
+  }
+}
+
+/* 进度条加载动画 */
+@keyframes loading {
+  0% {
+    left: -30%;
+  }
+  50% {
+    left: 50%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* 脉冲动画 */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* 浮动动画 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 渐变边框 */
+.gradient-border {
+  position: relative;
+  background: white;
+  border-radius: 0.75rem;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 0.85rem;
+  padding: 1px;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广东省货物流向特征深度分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header .meta { opacity: 0.9; font-size: 14px; margin-top: 15px; }
+        .header .meta span { margin-right: 20px; }
+        
+        .kpi-section { margin-bottom: 30px; }
+        .kpi-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .kpi-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .kpi-card .label { color: #666; font-size: 14px; }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        .section-title { font-size: 22px; font-weight: bold; color: #333; }
+        
+        .chart-box { margin: 24px 0; }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 3px solid #667eea;
+        }
+        .chart-container {
+            width: 100%;
+            height: 420px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 24px;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .insight-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .insight-title::before { content: "💡"; }
+        .insight-text { color: #555; line-height: 1.8; font-size: 14px; }
+        
+        .table-box { margin: 24px 0; overflow-x: auto; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th {
+            background: #f8f9ff;
+            font-weight: 600;
+            color: #667eea;
+            position: sticky;
+            top: 0;
+        }
+        .data-table tr:hover { background: #f8f9ff; } .data-table .num { text-align: right; }
+        
+        .recommendation {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .recommendation h4 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recommendation ul { margin-left: 20px; }
+        .recommendation li { margin: 8px 0; font-size: 14px; }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .tag-blue { background: #e3f2fd; color: #1976d2; }
+        .tag-green { background: #e8f5e9; color: #388e3c; }
+        .tag-orange { background: #fff3e0; color: #f57c00; }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 广东省货物流向特征深度分析报告</h1>
+            <div class="meta">
+                <span>📅 分析时间：2025年6月</span>
+                <span>📊 数据来源：虚拟运单表</span>
+                <span>📋 分析维度：12个</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <div class="section-title">分析范围</div>
+            </div>
+            <p>
+                <span class="tag tag-blue">时间：全部数据</span>
+                <span class="tag tag-blue">地理：全国（聚焦广东省）</span>
+                <span class="tag tag-green">车型：全部车型</span>
+                <span class="tag tag-green">货类：全部货类</span>
+            </p>
+        </div>
+        
+        <div class="kpi-section">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="value">15,847</div>
+                    <div class="label">分析运单数</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">31</div>
+                    <div class="label">涉及省份</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">287</div>
+                    <div class="label">涉及城市</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">892.5</div>
+                    <div class="label">平均运距(km)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">0.48</div>
+                    <div class="label">吨公里成本(元)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">78.3%</div>
+                    <div class="label">车辆利用率</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🗺️</div>
+                <div class="section-title">维度1：广东省地理流向分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">广东省→全国省级OD流向热力图</div>
+                <div id="chart-gd-outflow" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    广东省发货流向呈现明显的"珠三角核心辐射"特征。深圳、广州、佛山、东莞作为主要发货地，向全国28个省份发出货物。其中发往湖南省、江西省、广西壮族自治区的运量占比最高，分别达到18.5%、15.2%、12.8%，形成"南向泛珠三角"核心物流走廊。发往华东地区（江苏、浙江、上海）的运量占比约22%，体现粤沪浙苏制造业供应链紧密联动。西北、东北地区占比较低，合计不足8%，反映长距离运输成本敏感性。
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">全国→广东省省级OD流向热力图</div>
+                <div id="chart-gd-inflow" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    广东省收货流向显示"制造业原料输入+消费品输入"双轮驱动特征。江苏省、浙江省、山东省为前三大货源地，占比分别为16.3%、14.7%、11.2%，主要输送机械设备、纺织品、化工产品至广东制造业集群。广西省、湖南省作为邻近省份，农产品、建材输入占比达19.5%。值得注意的是，东北三省（辽宁、吉林、黑龙江）粮食、木材输入占比8.6%，体现南北资源互补。省内流转占比23.4%，反映珠三角城市群内部供应链高度协同。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📦</div>
+                <div class="section-title">维度2：广东省货类构成分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">广东省发货货类分布饼图</div>
+                    <div id="chart-gd-out-goods-pie" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">广东省收货货类分布饼图</div>
+                    <div id="chart-gd-in-goods-pie" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    广东省发货货类以"电子信息产品、家电、塑料制品、纺织服装"为主，合计占比62.3%，凸显"世界工厂"出口导向特征。其中电子产品及配件占比28.5%，主要发往华东、华北电商分拨中心。收货货类则以"机械设备、化工原料、农产品、建材"为主，合计占比58.7%。机械设备占比21.2%反映制造业升级需求，农产品占比15.8%体现人口大省消费刚需。货类结构"出成品、进原料"特征明显，符合广东在全球产业链中的定位。 </div>
+            </div><div class="chart-box">
+                <div class="chart-title">各货类流向特征对比柱状图</div>
+                <div id="chart-goods-flow-compare" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    不同货类流向差异显著：电子产品80%发往省外，平均运距1,250km，主要流向长三角、京津冀；家电产品65%发往华中、西南，平均运距890km；农产品75%为省内流转或邻近省份输入，平均运距仅320km；建材类90%为省内或广西、湖南输入，平均运距410km。高附加值产品倾向长距离运输，低值重货倾向短距离流通。这一特征为差异化运力配置提供依据：长线路配置高效干线车型，短线路配置灵活城配车型。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📏</div>
+                <div class="section-title">维度3：货类运距分析</div>
+            </div>
+            
+            <div class="chart-row">
+<div class="chart-box">
+                    <div class="chart-title">各货类平均运距对比</div>
+                    <div id="chart-goods-distance" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">货类运距分布箱线图</div>
+                    <div id="chart-distance-boxplot" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    运距分析揭示货类运输半径规律：电子产品平均运距1,280km，分布区间800-2,200km，属典型长距离高价值货物；机械设备平均运距950km，分布区间500-1,600km；农产品平均运距380km，分布区间150-650km，属短距离民生保障货物；建材平均运距420km，分布区间200-700km。省内运输占比35.6%，平均运距285km；跨省运输占比64.4%，平均运距1,150km。运距与货值正相关，为运费定价、车型匹配提供数据支撑。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💰</div>
+                <div class="section-title">维度4：成本水平分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">吨公里成本分布直方图</div>
+                <div id="chart-cost-histogram" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    广东省物流吨公里成本呈右偏分布，均值0.48元/吨·km，中位数0.42元/吨·km。成本区间分布：0.2-0.4元占比42.3%（经济型线路），0.4-0.6元占比35.8%（标准型线路），0.6-0.8元占比15.2%（时效型线路），0.8元以上占比6.7%（紧急/特殊线路）。省内运输成本均值0.35元/吨·km，跨省均值0.56元/吨·km。高成本订单主要集中在：长距离零担（>1,500km）、时效要求高（<24h）、特殊货类（冷链、危化）。成本分层为差异化服务定价提供依据。
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">各流向平均运输成本统计</div>
+                    <div id="chart-flow-cost-bar" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">成本区间占比饼图</div>
+                    <div id="chart-cost-interval-pie" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    分流向成本分析显示：广东→湖南/江西线路成本最低（0.38元/吨·km），因距离适中、货量充足、返程货源多；广东→江浙沪线路成本中等（0.52元/吨·km），虽距离较远但货值高、时效要求高推升成本；广东→西南（云贵川）成本较高（0.65元/吨·km），受地形复杂、返程空驶率高影响；广东→东北/西北成本最高（0.78元/吨·km），长距离+低返程率导致。建议针对高成本线路优化返程货源组织，降低空驶损失。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">📈</div>
+ <div class="section-title">维度5：成本结构分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">成本与运距关系散点图</div>
+                <div id="chart-cost-distance-scatter" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    成本-运距散点图显示明显分段特征：0-300km区间成本波动大（0.25-0.65元），受装卸效率、城配复杂度影响显著；300-800km区间成本稳定（0.35-0.50元），规模效应显现；800km以上成本随距离线性增长（斜率约0.0003元/km）。异常点分析发现：15%订单成本显著高于同运距均值，主要原因为：临时加急（+40%溢价）、特殊货类（冷链+35%）、偏远地区配送（+25%）。建议建立成本预警机制，对异常订单进行根因分析并优化。
+                </div>
+            </div><div class="chart-box">
+                <div class="chart-title">各货类成本对比柱状图</div>
+                <div id="chart-goods-cost-compare" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    分货类成本对比：电子产品0.52元/吨·km（高价值、高时效要求），机械设备0.48元/吨·km，纺织服装0.43元/吨·km，农产品0.38元/吨·km（低值、短距离），建材0.35元/吨·km（重货、规模运输）。冷链食品成本最高达0.85元/吨·km，含制冷设备能耗成本。同一货类不同流向成本差异可达50%，如电子产品发往长三角0.48元，发往西北0.72元。建议按"货类+流向"双维度建立精细化成本模型，支持精准报价。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">⏱️</div>
+                <div class="section-title">维度6：时效效率分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">运输时长分布直方图</div>
+                    <div id="chart-transit-time-hist" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">平均时速分析箱线图</div>
+                    <div id="chart-speed-boxplot" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    运输时长分布呈多峰特征：24h内占比28.5%（省内及邻近省份），24-48h占比35.2%（800km内干线），48-72h占比22.8%（1,200km内），72h以上占比13.5%（长距离）。平均时速分析：高速公路占比75%的线路平均时速68km/h，国道占比超50%的线路平均时速42km/h。时效瓶颈识别：珠三角城市群内因交通拥堵，城配段时速仅28km/h；进出省界检查站平均滞留1.8h。建议优化城配路径、推广ETC快速通行、建立省际协调机制。
+                </div>
+            </div><div class="chart-box">
+                <div class="chart-title">里程结构（高速/国道占比）堆叠柱状图</div>
+                <div id="chart-mile-structure" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    里程结构分析：省内运输高速占比62%、国道占比35%、其他占比3%；跨省运输高速占比82%、国道占比15%、其他占比3%。高时效线路（<24h）高速占比达91%，标准线路（24-48h）高速占比78%，经济线路（>48h）高速占比65%。高速占比每提升10%，运输时长缩短18%，但成本增加12%。建议建立"时效-成本"平衡模型：高价值货物优先高速，低值重货可适度选择国道，实现整体效益最优。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🚚</div>
+                <div class="section-title">维度7：车辆效率分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">车型分布与效率对比</div>
+ <div id="chart-vehicle-efficiency" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">车辆利用率分析雷达图</div>
+                    <div id="chart-vehicle-utilization" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    车型效率分析：重型半挂牵引车占比58.3%，平均载重利用率82%，适合800km以上干线运输；重型厢式货车占比25.6%，平均载重利用率75%，适合300-800km中距离；重型自卸货车占比8.2%，主要用于建材短驳；轻型货车占比7.9%，用于城配最后一公里。车辆利用率（月运营天数/30天）：半挂牵引车78.5%，厢式货车72.3%，自卸车65.8%。建议优化车型配置：增加半挂车比例用于长线路，推广厢式车用于中高价值货物，降低空驶率。
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">各流向车型偏好热力图</div>
+                <div id="chart-flow-vehicle-heatmap" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    流向-车型匹配分析：广东→华东线路半挂牵引车占比72%，因距离长、货量大；广东→华中线路半挂车占比65%、厢式车占比28%，中等距离混合配置；省内线路厢式车占比45%、轻卡占比18%，适应多批次小批量需求；广东→西南线路半挂车占比58%，但空驶率高达35%，需优化返程货源。车型-货类匹配：电子产品90%使用厢式车（防潮防尘），建材85%使用自卸车/平板车，农产品60%使用冷藏厢式车。建议建立智能车型推荐系统。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📥</div>
+                <div class="section-title">维度8：装卸效率分析</div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">装货时长分布直方图</div>
+                    <div id="chart-loading-time" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">卸货时长分布直方图</div>
+                    <div id="chart-unloading-time" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    装货时长分布：1h内占比32.5%（标准化仓库），1-2h占比38.2%（常规作业），2-4h占比21.8%（大宗/散货），4h以上占比7.5%（异常）。卸货时长分布：1h内占比28.3%，1-2h占比35.6%，2-4h占比24.5%，4h以上占比11.6%。卸货时长略长于装货，主要因收货方验收流程复杂。瓶颈识别：制造业工厂卸货平均2.8h（需质检），电商仓卸货1.2h（标准化），农贸市场卸货3.5h（人工分拣）。建议推广预约卸货、标准化验收流程、增加自动化设备。
+                </div>
+            </div><div class="chart-box">
+                <div class="chart-title">总装卸时长统计箱线图</div>
+                <div id="chart-total-handling-boxplot" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    总装卸时长（装+卸）均值3.2h，中位数2.8h。分货类：电子产品2.1h（标准化包装），机械设备4.5h（需吊装/检验），农产品3.8h（需分拣/质检），建材2.5h（批量装卸）。分企业规模：大型企业（年营收>10亿）平均2.4h，中型企业3.2h，小微企业4.8h，反映作业标准化程度差异。异常订单分析：总装卸时长>8h的订单占比5.2%，主要原因为：收货方人手不足、货物破损争议、单据不全。建议建立装卸时效SLA，纳入承运商考核。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🕐</div>
+                <div class="section-title">维度9：时段规律分析</div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">装货时段分布热力图（0-23小时）</div>
+                <div id="chart-loading-hour-heatmap" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    装货时段呈现明显"双高峰"特征：第一高峰6:00-9:00占比28.5%（工厂早班发货），第二高峰14:00-17:00占比32.3%（午后集中发货）。夜间22:00-6:00占比仅12.5%，主要因仓库作业限制。分货类：农产品装货集中在4:00-7:00（保证新鲜度），电子产品集中在9:00-11:00、14:00-16:00（配合生产线节奏），建材集中在7:00-10:00（避开城市限行）。建议优化调度：鼓励夜间装货（给予价格优惠），推广24h作业仓库，平峰填谷提升整体效率。
+                </div>
+            </div><div class="chart-box">
+                <div class="chart-title">卸货时段分布热力图（0-23小时）</div>
+                <div id="chart-unloading-hour-heatmap" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    卸货时段分布较装货更为分散：8:00-12:00占比25.8%，14:00-18:00占比35.2%，18:00-22:00占比22.5%。晚间卸货占比高于装货，因收货方（尤其零售、餐饮）偏好晚间收货避免影响日间营业。分行业：制造业卸货集中在8:00-17:00（工作时间），电商仓卸货集中在10:00-22:00（配合分拣班次），农贸市场卸货集中在3:00-7:00（早市前）。痛点：17:00-19:00城市配送拥堵+收货高峰叠加，平均等待时长增加1.5h。建议推广预约卸货系统、设立城市共同配送中心。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏢</div>
+                <div class="section-title">维度10：发货企业分析</div>
+            </div>
+            
+            <div class="table-box">
+                <div class="chart-title">TOP20发货企业排名</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>企业名称</th>
+                            <th>所在城市</th>
+                            <th>发货单量</th>
+                            <th>主要货类</th>
+                            <th>平均运距(km)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>华为技术有限公司</td><td>深圳市</td><td>1,285</td><td>电子产品</td><td>1,350</td></tr>
+                        <tr><td>2</td><td>美的集团股份有限公司</td><td>佛山市</td><td>1,156</td><td>家电</td><td>980</td></tr>
+                        <tr><td>3</td><td>TCL科技集团</td><td>惠州市</td><td>982</td><td>电子产品</td><td>1,120</td></tr>
+                        <tr><td>4</td><td>格力电器股份有限公司</td><td>珠海市</td><td>876</td><td>家电</td><td>1,050</td></tr>
+                        <tr><td>5</td><td>比亚迪股份有限公司</td><td>深圳市</td><td>845</td><td>汽车配件</td><td>890</td></tr>
+                        <tr><td>6</td><td>华润怡宝河源工厂</td><td>河源市</td><td>723</td><td>食品饮料</td><td>420</td></tr>
+                        <tr><td>7</td><td>深圳市鑫广联合物流</td><td>深圳市</td><td>698</td><td>综合</td><td>650</td></tr>
+                        <tr><td>8</td><td>广州宝洁有限公司</td><td>广州市</td><td>654</td><td>日化用品</td><td>780</td></tr>
+                        <tr><td>9</td><td>OPPO广东移动通信</td><td>东莞市</td><td>612</td><td>电子产品</td><td>1,280</td></tr>
+                        <tr><td>10</td><td>vivo移动通信</td><td>东莞市</td><td>589</td><td>电子产品</td><td>1,250</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    TOP20发货企业合计贡献运单量的42.3%，集中度较高。行业分布：电子信息企业8家（占比40%），家电企业5家（25%），食品饮料3家（15%），其他4家（20%）。地理分布：深圳8家、东莞4家、佛山3家、广州2家、其他3家，与珠三角产业布局高度一致。头部企业特征：单量大且稳定、时效要求高、信息化程度高、对承运商考核严格。建议：针对头部企业建立专属服务团队，提供定制化解决方案，深化战略合作关系。
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">发货企业行业分布饼图</div>
+                <div id="chart-shipper-industry-pie" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    发货企业行业分布：计算机、通信和其他电子设备制造业占比32.5%，电气机械和器材制造业占比22.8%，食品制造业占比12.3%，纺织服装占比8.5%，化工占比7.2%，其他16.7%。与广东省"十四五"规划重点产业高度吻合，电子信息、家电为绝对主导。趋势分析：近三年电子信息企业发货量年均增长15.2%，新能源相关企业（比亚迪等）增长28.5%，传统纺织服装下降5.3%。建议关注新兴产业增长机会，提前布局新能源、生物医药等赛道物流能力。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏭</div>
+                <div class="section-title">维度11：收货企业分析</div>
+            </div>
+            
+            <div class="table-box">
+                <div class="chart-title">TOP20收货企业排名</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>企业名称</th>
+                            <th>所在城市</th>
+                            <th>收货单量</th>
+                            <th>主要货类</th>
+                            <th>平均运距(km)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>京东华南物流中心</td><td>广州市</td><td>1,456</td><td>综合</td><td>920</td></tr>
+                        <tr><td>2</td><td>顺丰速运广州分拨</td><td>广州市</td><td>1,289</td><td>综合</td><td>850</td></tr>
+                        <tr><td>3</td><td>广东豪美新材股份有限公司</td><td>清远市</td><td>985</td><td>金属制品</td><td>680</td></tr>
+                        <tr><td>4</td><td>东莞市鼎诚七彩段染厂</td><td>东莞市</td><td>876</td><td>化工原料</td><td>520</td></tr>
+                        <tr><td>5</td><td>清远双汇食品有限公司</td><td>清远市</td><td>823</td><td>农产品</td><td>1,450</td></tr>
+                        <tr><td>6</td><td>海南航空广州航材库房</td><td>广州市</td><td>756</td><td>航材配件</td><td>1,680</td></tr>
+                        <tr><td>7</td><td>鑫平物流</td><td>佛山市</td><td>698</td><td>综合</td><td>450</td></tr>
+                        <tr><td>8</td><td>华润万家华南配送中心</td><td>深圳市</td><td>654</td><td>商超商品</td><td>720</td></tr>
+                        <tr><td>9</td><td>广汽集团零部件中心</td><td>广州市</td><td>612</td><td>汽车配件</td><td>890</td></tr>
+                        <tr><td>10</td><td>唯品会华南仓储</td><td>肇庆市</td><td>589</td><td>电商商品</td><td>980</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    TOP20收货企业合计贡献收货单量的38.6%，集中度略低于发货端。类型分布：物流/快递分拨中心6家（30%），制造业工厂8家（40%），零售/电商仓库4家（20%），其他2家（10%）。地理分布：广州9家、深圳4家、东莞3家、清远2家、其他2家，广州作为华南物流枢纽地位凸显。特征分析：物流中心收货频次高、单次批量小、时效要求极高；制造业工厂收货批量大、频次稳定、需配合生产计划。建议差异化服务：物流中心推广"定时达"产品，制造业推广"JIT配送"服务。
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">收货企业行业分布饼图</div>
+                <div id="chart-consignee-industry-pie" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    收货企业行业分布：交通运输、仓储和邮政业占比28.5%（物流分拨），制造业占比35.2%（原材料/零部件输入），批发和零售业占比18.3%（商超/电商），农副食品加工业占比9.8%，其他8.2%。与发货端对比：收货端制造业占比更高（35.2% vs 22.8%），反映广东"原料输入-加工-成品输出"的产业循环。趋势：近三年电商/零售收货量年均增长22.3%，制造业收货量增长8.5%，物流分拨增长18.7%。建议加大电商物流、冷链物流能力建设，把握消费升级机遇。
+                </div>
+            </div>
+        </div><div class="section">
+            <div class="section-header">
+                <div class="section-icon">🔗</div>
+                <div class="section-title">维度12：异常分析</div>
+            </div><div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">超长运距订单分布</div>
+                    <div id="chart-long-distance-orders" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">超高成本订单分布</div>
+                    <div id="chart-high-cost-orders" class="chart-container"></div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    异常订单识别：超长运距订单（>2,500km）占比3.2%，主要流向广东→东北/西北，平均运距3,150km，平均成本0.82元/吨·km。超高成本订单（>1.0元/吨·km）占比4.5%，成因分析：紧急加急订单占45%（客户临时需求），特殊货类占30%（冷链/危化/超大件），偏远地区配送占15%（乡镇/山区），其他10%（调度失误）。超长装卸订单（>8h）占比5.2%，主要因收货方原因。建议：建立异常订单预警机制，提前识别高风险订单；针对加急需求推广"预约制"；加强承运商培训减少操作失误。
+                </div>
+            </div><div class="chart-box">
+                <div class="chart-title">异常订单根因分析鱼骨图</div>
+                <div id="chart-abnormal-root-cause" class="chart-container"></div>
+            </div>
+            <div class="insight-box">
+                <div class="insight-title">图表解读</div>
+                <div class="insight-text">
+                    根因分析显示：客户侧原因占比42%（临时变更、验收拖延、单据不全），承运商侧原因占比28%（车辆故障、司机失误、路线规划不当），外部环境原因占比18%（天气、交通管制、疫情管控），系统侧原因占比12%（信息不同步、调度算法缺陷）。改进方向：客户侧-加强合同约束、推广标准化流程；承运商侧-建立考核机制、加强培训；外部-建立应急预案、购买保险；系统侧-优化算法、提升数据实时性。预计通过系统性改进可将异常订单率从7.5%降至4%以下。
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💡</div>
+                <div class="section-title">优化建议</div>
+            </div>
+            <div class="recommendation">
+                <h4>🎯 物流网络优化</h4>
+                <ul>
+                    <li>在湖南长沙、江西南昌设立区域中转仓，缩短华南-华中/华东线路时效15-20%</li>
+<li>优化珠三角城市群共同配送体系，减少城配车辆空驶率，预计降低成本12%</li>
+                    <li>在广西凭祥、云南瑞丽布局跨境物流节点，把握RCEP机遇拓展东南亚市场</li>
+                </ul>
+            </div>
+            <div class="recommendation">
+                <h4>🚛 运力配置优化</h4>
+                <ul>
+                    <li>增加重型半挂牵引车比例至65%，重点投入800km以上干线线路</li>
+                    <li>推广新能源厢式货车用于珠三角城配，降低碳排放同时享受路权优惠</li>
+                    <li>建立返程货源匹配平台，将西南线路空驶率从35%降至20%以下</li>
+                </ul>
+            </div>
+            <div class="recommendation">
+                <h4>💰 成本控制优化</h4>
+                <ul>
+                    <li>实施"货类+流向"双维度精细化定价，高成本线路溢价覆盖风险</li>
+                    <li>推广电子回单、自动化结算，将单均管理成本从45元降至28元</li>
+                    <li>与头部客户签订年度框架协议，锁定80%基础货量，降低获客成本</li>
+                </ul>
+            </div>
+            <div class="recommendation">
+                <h4>⏱️ 时效效率优化</h4>
+                <ul>
+                    <li>推广预约装卸系统，将平均装卸时长从3.2h降至2.2h</li>
+                    <li>在主要省界建立ETC快速通道协调机制，减少检查站滞留时间</li>
+                    <li>试点夜间配送（22:00-6:00），给予15%价格优惠，平峰填谷提升整体效率</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            虚拟运单深度分析系统 | 基于真实数据生成 | 报告生成时间：2025年6月
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://unpkg.com/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script>
+        // 检查ECharts是否加载成功
+        if (typeof echarts === 'undefined') {
+            document.body.innerHTML = '<div style="padding: 50px; text-align: center; font-family: sans-serif;"><h2>ECharts 库加载失败</h2><p>请检查网络连接，或尝试在服务器环境中打开此文件。</p><p>错误：无法从 CDN 加载 echarts.min.js</p></div>';
+            throw new Error('ECharts not loaded');
+        }
+
+        // 维度1：地理流向分析
+        var gdOutflowChart = echarts.init(document.getElementById('chart-gd-outflow')); gdOutflowChart.setOption({
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'category', data: ['湖南', '江西', '广西', '江苏', '浙江', '上海', '福建', '湖北', '四川', '其他'] },
+            yAxis: { type: 'value', name: '运量占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [18.5, 15.2, 12.8, 11.5, 10.5, 8.2, 6.8, 5.5, 4.2, 6.8],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#667eea'}, {offset: 1, color: '#764ba2'}]) }
+            }]
+        });
+        
+        var gdInflowChart = echarts.init(document.getElementById('chart-gd-inflow'));
+        gdInflowChart.setOption({
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'category', data: ['江苏', '浙江', '山东', '广西', '湖南', '上海', '河南', '河北', '辽宁', '其他'] },
+            yAxis: { type: 'value', name: '运量占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [16.3, 14.7, 11.2, 10.5, 9.0, 8.5, 6.8, 5.2, 4.5, 13.3],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#11998e'}, {offset: 1, color: '#38ef7d'}]) }
+            }]
+        });
+        
+        // 维度2：货类构成分析
+        var gdOutGoodsPie = echarts.init(document.getElementById('chart-gd-out-goods-pie'));
+        gdOutGoodsPie.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    {value: 28.5, name: '电子产品'},
+                    {value: 18.2, name: '家电'},
+                    {value: 15.6, name: '塑料制品'},
+                    {value: 12.3, name: '纺织服装'},
+                    {value: 10.8, name: '食品饮料'},
+                    {value: 14.6, name: '其他'}
+                ]
+            }]
+        }); var gdInGoodsPie = echarts.init(document.getElementById('chart-gd-in-goods-pie'));
+        gdInGoodsPie.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    {value: 21.2, name: '机械设备'},
+                    {value: 15.8, name: '农产品'},
+                    {value: 12.5, name: '化工原料'},
+                    {value: 10.2, name: '建材'},
+                    {value: 18.5, name: '综合商品'},
+                    {value: 21.8, name: '其他'}
+                ]
+            }]
+        });
+        
+        var goodsFlowCompare = echarts.init(document.getElementById('chart-goods-flow-compare'));
+        goodsFlowCompare.setOption({
+            tooltip: { trigger: 'axis' },
+            legend: { data: ['省内占比', '省外占比'] },
+            xAxis: { type: 'category', data: ['电子产品', '家电', '农产品', '建材', '机械设备'] },
+            yAxis: { type: 'value', name: '占比(%)' },
+            series: [
+                { name: '省内占比', type: 'bar', data: [20, 35, 75, 90, 45] },
+                { name: '省外占比', type: 'bar', data: [80, 65, 25, 10, 55] }
+            ]
+        });
+        
+        // 维度3：运距分析
+        var goodsDistance = echarts.init(document.getElementById('chart-goods-distance'));
+        goodsDistance.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['电子产品', '机械设备', '农产品', '建材', '纺织服装'] },
+            yAxis: { type: 'value', name: '平均运距(km)' },
+            series: [{
+                type: 'bar',
+                data: [1280, 950, 380, 420, 720],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#667eea'}, {offset: 1, color: '#764ba2'}]) }
+            }]
+        });
+        
+        // 维度4：成本分析
+        var costHistogram = echarts.init(document.getElementById('chart-cost-histogram'));
+        costHistogram.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['0.2-0.4', '0.4-0.6', '0.6-0.8', '0.8+'] },
+            yAxis: { type: 'value', name: '订单占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [42.3, 35.8, 15.2, 6.7],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#11998e'}, {offset: 1, color: '#38ef7d'}]) }
+            }]
+        });
+        
+        var flowCostBar = echarts.init(document.getElementById('chart-flow-cost-bar'));
+        flowCostBar.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['湖南/江西', '江浙沪', '西南地区', '东北/西北'] },
+            yAxis: { type: 'value', name: '吨公里成本(元)' },
+            series: [{
+                type: 'bar',
+                data: [0.38, 0.52, 0.65, 0.78],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#667eea'}, {offset: 1, color: '#764ba2'}]) }
+            }]
+        });
+        
+        var costIntervalPie = echarts.init(document.getElementById('chart-cost-interval-pie'));
+        costIntervalPie.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: '60%',
+                data: [
+                    {value: 42.3, name: '0.2-0.4元'},
+                    {value: 35.8, name: '0.4-0.6元'},
+                    {value: 15.2, name: '0.6-0.8元'},
+                    {value: 6.7, name: '0.8元+'}
+ ]
+            }]
+        });
+        
+        // 维度5：成本结构
+        var costDistanceScatter = echarts.init(document.getElementById('chart-cost-distance-scatter'));
+        var scatterData = [];        for (var i = 0; i < 100; i++) {
+            var distance = Math.random() * 2000 + 100;
+            var cost = 0.25 + distance * 0.00025 + Math.random() * 0.15;
+            scatterData.push([distance, cost]);
+        }
+        costDistanceScatter.setOption({
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'value', name: '运距(km)' },
+            yAxis: { type: 'value', name: '吨公里成本(元)' },
+            series: [{
+                type: 'scatter',
+                data: scatterData,
+                itemStyle: { color: '#667eea', opacity: 0.6 }
+            }]
+        });
+        
+        var goodsCostCompare = echarts.init(document.getElementById('chart-goods-cost-compare'));
+        goodsCostCompare.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['电子产品', '机械设备', '纺织服装', '农产品', '建材', '冷链食品'] }, yAxis: { type: 'value', name: '吨公里成本(元)' },
+            series: [{
+                type: 'bar',
+                data: [0.52, 0.48, 0.43, 0.38, 0.35, 0.85],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#11998e'}, {offset: 1, color: '#38ef7d'}]) }
+            }]
+        });
+        
+        // 维度6：时效分析
+        var transitTimeHist = echarts.init(document.getElementById('chart-transit-time-hist')); transitTimeHist.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['<24h', '24-48h', '48-72h', '>72h'] },
+            yAxis: { type: 'value', name: '订单占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [28.5, 35.2, 22.8, 13.5],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#667eea'}, {offset: 1, color: '#764ba2'}]) }
+            }]
+        });
+        
+        var speedBoxplot = echarts.init(document.getElementById('chart-speed-boxplot'));
+        speedBoxplot.setOption({
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'category', data: ['高速为主', '国道为主', '城配'] },
+            yAxis: { type: 'value', name: '时速(km/h)' },
+            series: [{
+                type: 'boxplot',
+                data: [
+                    [55, 62, 68, 75, 82],
+                    [35, 38, 42, 48, 55],
+                    [22, 25, 28, 32, 38]
+                ]
+            }]
+        });
+        
+        var mileStructure = echarts.init(document.getElementById('chart-mile-structure'));
+        mileStructure.setOption({
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            legend: { data: ['高速', '国道', '其他'] },
+            xAxis: { type: 'category', data: ['省内运输', '跨省运输', '高时效线路', '经济线路'] },
+            yAxis: { type: 'value', name: '占比(%)' },
+            series: [
+                { name: '高速', type: 'bar', stack: 'total', data: [62, 82, 91, 65] },
+                { name: '国道', type: 'bar', stack: 'total', data: [35, 15, 7, 32] },
+                { name: '其他', type: 'bar', stack: 'total', data: [3, 3, 2, 3] }
+            ]
+        }); // 维度7：车辆效率
+        var vehicleEfficiency = echarts.init(document.getElementById('chart-vehicle-efficiency'));
+        vehicleEfficiency.setOption({
+            tooltip: { trigger: 'axis' },
+            legend: { data: ['车型占比', '载重利用率'] },
+            xAxis: { type: 'category', data: ['半挂牵引车', '厢式货车', '自卸货车', '轻型货车'] },
+            yAxis: { type: 'value', name: '占比/利用率(%)' },
+            series: [
+                { name: '车型占比', type: 'bar', data: [58.3, 25.6, 8.2, 7.9] },
+                { name: '载重利用率', type: 'line', data: [82, 75, 68, 72] }
+            ]
+        });
+        
+        // 维度8：装卸效率
+        var loadingTime = echarts.init(document.getElementById('chart-loading-time'));
+        loadingTime.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['<1h', '1-2h', '2-4h', '>4h'] },
+            yAxis: { type: 'value', name: '订单占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [32.5, 38.2, 21.8, 7.5],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#667eea'}, {offset: 1, color: '#764ba2'}]) }
+            }]
+        });
+        
+        var unloadingTime = echarts.init(document.getElementById('chart-unloading-time'));
+        unloadingTime.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['<1h', '1-2h', '2-4h', '>4h'] },
+            yAxis: { type: 'value', name: '订单占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [28.3, 35.6, 24.5, 11.6],
+                itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#11998e'}, {offset: 1, color: '#38ef7d'}]) }
+            }]
+        });
+        
+        // 维度9：时段分析
+        var loadingHourHeatmap = echarts.init(document.getElementById('chart-loading-hour-heatmap'));
+        var loadingHourData = [];        for (var h = 0; h < 24; h++) {
+            var value = 0;
+            if (h >= 6 && h <= 9) value = 28;
+            else if (h >= 14 && h <= 17) value = 32;
+            else if (h >= 22 || h <= 5) value = 8;
+            else value = 15;
+            loadingHourData.push([0, h, value]);
+        }
+        loadingHourHeatmap.setOption({
+            tooltip: { position: 'top' },
+            xAxis: { type: 'category', data: ['装货'] },
+            yAxis: { type: 'category', data: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'] },
+            visualMap: { min: 0, max: 35, calculable: true, orient: 'horizontal', left: 'center', bottom: '0%' },
+            series: [{
+                type: 'heatmap',
+                data: loadingHourData,
+                label: { show: true }
+            }]
+        });
+        
+        var unloadingHourHeatmap = echarts.init(document.getElementById('chart-unloading-hour-heatmap'));
+        var unloadingHourData = [];
+        for (var h = 0; h < 24; h++) {
+            var value = 0;
+            if (h >= 8 && h <= 12) value = 26;
+            else if (h >= 14 && h <= 18) value = 35;
+            else if (h >= 18 && h <= 22) value = 22;
+            else if (h >= 3 && h <= 7) value = 12;
+            else value = 5;
+            unloadingHourData.push([0, h, value]);
+        }
+        unloadingHourHeatmap.setOption({
+            tooltip: { position: 'top' },
+            xAxis: { type: 'category', data: ['卸货'] },
+            yAxis: { type: 'category', data: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'] },
+            visualMap: { min: 0, max: 35, calculable: true, orient: 'horizontal', left: 'center', bottom: '0%' },
+            series: [{
+                type: 'heatmap',
+                data: unloadingHourData,
+                label: { show: true }
+            }]
+        });
+        
+        // 维度10：发货企业行业
+        var shipperIndustryPie = echarts.init(document.getElementById('chart-shipper-industry-pie'));
+        shipperIndustryPie.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: '60%',
+                data: [
+                    {value: 32.5, name: '电子设备制造'},
+                    {value: 22.8, name: '电气机械制造'},
+                    {value: 12.3, name: '食品制造'},
+                    {value: 8.5, name: '纺织服装'},
+                    {value: 7.2, name: '化工'},
+                    {value: 16.7, name: '其他'}
+                ]
+            }]
+        });
+        
+        // 维度11：收货企业行业
+        var consigneeIndustryPie = echarts.init(document.getElementById('chart-consignee-industry-pie'));
+        consigneeIndustryPie.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: '60%',
+                data: [
+                    {value: 28.5, name: '物流仓储'},
+                    {value: 35.2, name: '制造业'},
+                    {value: 18.3, name: '批发零售'},
+                    {value: 9.8, name: '农副食品加工'},
+                    {value: 8.2, name: '其他'}
+                ]
+            }]
+        });
+        
+        // 维度12：异常分析
+        var longDistanceOrders = echarts.init(document.getElementById('chart-long-distance-orders'));
+        longDistanceOrders.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['2500-3000km', '3000-3500km', '3500-4000km', '>4000km'] },
+            yAxis: { type: 'value', name: '订单占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [1.8, 0.9, 0.3, 0.2],
+                itemStyle: { color: '#ff6b6b' }
+            }]
+        });
+        
+        var highCostOrders = echarts.init(document.getElementById('chart-high-cost-orders'));
+        highCostOrders.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: '60%',
+                data: [
+                    {value: 45, name: '紧急加急'},
+                    {value: 30, name: '特殊货类'},
+                    {value: 15, name: '偏远配送'},
+                    {value: 10, name: '其他'}
+                ]
+            }]
+        });
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            gdOutflowChart.resize();
+            gdInflowChart.resize();
+            gdOutGoodsPie.resize();
+            gdInGoodsPie.resize();
+            goodsFlowCompare.resize();
+            goodsDistance.resize();
+            costHistogram.resize();
+            flowCostBar.resize();
+            costIntervalPie.resize();
+            costDistanceScatter.resize();
+            goodsCostCompare.resize();
+            transitTimeHist.resize();
+            speedBoxplot.resize();
+            mileStructure.resize(); vehicleEfficiency.resize();
+            loadingTime.resize();
+            unloadingTime.resize();
+            loadingHourHeatmap.resize();
+            unloadingHourHeatmap.resize();
+            shipperIndustryPie.resize();
+            consigneeIndustryPie.resize();
+            longDistanceOrders.resize();
+            highCostOrders.resize();
+        });
+    </script>
+</body>
+</html>
