@@ -107,6 +107,16 @@ const MOCK_NEWS: IndustryNews[] = [
     isRead: false,
     importance: 'high',
   },
+  {
+    id: '6',
+    title: '智能物流园区建设标准正式发布',
+    category: 'policy',
+    source: '工信部',
+    time: '4小时前',
+    summary: '新标准将推动物流园区智能化升级改造',
+    isRead: true,
+    importance: 'medium',
+  },
 ];
 
 // 模拟早报数据
@@ -176,11 +186,11 @@ export function DigitalHuman() {
   const getImportanceIcon = (importance: string) => {
     switch (importance) {
       case 'high':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
       case 'medium':
-        return <Bell className="w-5 h-5 text-amber-500" />;
+        return <Bell className="w-4 h-4 text-amber-500" />;
       default:
-        return <CheckCircle2 className="w-5 h-5 text-slate-400" />;
+        return <CheckCircle2 className="w-4 h-4 text-slate-400" />;
     }
   };
 
@@ -384,8 +394,8 @@ export function DigitalHuman() {
             <Badge variant="outline" className="cursor-pointer hover:bg-slate-50">市场</Badge>
           </div>
 
-          {/* 行业动态列表 */}
-          <div className="space-y-3">
+          {/* 行业动态瀑布流布局 */}
+          <div className="grid grid-cols-2 gap-3">
             {news.map((item) => (
               <Card 
                 key={item.id} 
@@ -402,8 +412,8 @@ export function DigitalHuman() {
                     <div className="mt-0.5">
                       {getImportanceIcon(item.importance)}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <Badge variant="outline" className={`text-xs ${getCategoryColor(item.category)}`}>
                           {getCategoryName(item.category)}
                         </Badge>
@@ -414,13 +424,13 @@ export function DigitalHuman() {
                           </Badge>
                         )}
                       </div>
-                      <h4 className={`font-medium mb-1 ${item.isRead ? 'text-slate-600' : 'text-slate-900'}`}>
+                      <h4 className={`font-medium mb-2 text-sm leading-snug ${item.isRead ? 'text-slate-600' : 'text-slate-900'}`}>
                         {item.title}
                       </h4>
-                      <p className="text-sm text-slate-500 line-clamp-2">{item.summary}</p>
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{item.summary}</p>
                       <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
                         <Globe className="w-3 h-3" />
-                        <span>来源: {item.source}</span>
+                        <span className="truncate">{item.source}</span>
                       </div>
                     </div>
                   </div>

@@ -101,45 +101,8 @@ const INITIAL_CONNECTIONS: SystemConnection[] = [
   },
 ];
 
-// 模拟数据资产
+// 模拟数据资产 - 只保留系统对接和上传数据
 const INITIAL_DATA_ASSETS: DataAsset[] = [
-  // 平台内嵌数据
-  {
-    id: '1',
-    name: '全国虚拟运单数据',
-    description: '覆盖全国31个省份的虚拟运单数据，包含车辆、货物、线路等核心信息',
-    type: 'platform',
-    size: '2.3 TB',
-    recordCount: 158000000,
-    lastUpdate: '2026-03-05',
-    updateFrequency: '每7天更新',
-    status: 'active',
-    tags: ['核心数据', '运单', '全国'],
-  },
-  {
-    id: '2',
-    name: '物流企业画像数据',
-    description: '全国物流企业的基本信息、运输能力、信用评级等画像数据',
-    type: 'platform',
-    size: '156 GB',
-    recordCount: 850000,
-    lastUpdate: '2026-03-04',
-    updateFrequency: '每7天更新',
-    status: 'active',
-    tags: ['企业', '画像', '信用'],
-  },
-  {
-    id: '3',
-    name: '行业运价指数',
-    description: '主要运输线路的运价指数，包含历史趋势和实时波动',
-    type: 'platform',
-    size: '45 GB',
-    recordCount: 12000000,
-    lastUpdate: '2026-03-06',
-    updateFrequency: '每日更新',
-    status: 'active',
-    tags: ['运价', '指数', '趋势'],
-  },
   // 系统连接数据
   {
     id: '6',
@@ -213,7 +176,7 @@ export function DataAssets() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState<DataAsset | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'platform' | 'upload' | 'system'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'upload' | 'system'>('all');
   
   // 系统连接相关状态
   const [connections, setConnections] = useState<SystemConnection[]>(INITIAL_CONNECTIONS);
@@ -236,14 +199,13 @@ export function DataAssets() {
   });
 
   // 按类型分组
-  const platformAssets = filteredAssets.filter(a => a.type === 'platform');
   const uploadAssets = filteredAssets.filter(a => a.type === 'upload');
   const systemAssets = filteredAssets.filter(a => a.type === 'system');
 
   // 暂停/恢复数据
   const toggleAssetStatus = (id: string) => {
     setDataAssets(prev => prev.map(asset => {
-      if (asset.id === id && asset.type !== 'platform') {
+      if (asset.id === id) {
         return {
           ...asset,
           status: asset.status === 'active' ? 'paused' : 'active'
@@ -270,7 +232,6 @@ export function DataAssets() {
   // 获取类型图标
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'platform': return <Cloud className="w-5 h-5" />;
       case 'upload': return <Upload className="w-5 h-5" />;
       case 'system': return <Server className="w-5 h-5" />;
       default: return <Database className="w-5 h-5" />;
@@ -280,7 +241,6 @@ export function DataAssets() {
   // 获取类型名称
   const getTypeName = (type: string) => {
     switch (type) {
-      case 'platform': return '平台数据';
       case 'upload': return '上传数据';
       case 'system': return '系统对接';
       default: return '其他';
@@ -290,7 +250,6 @@ export function DataAssets() {
   // 获取类型颜色
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'platform': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'upload': return 'bg-green-100 text-green-700 border-green-200';
       case 'system': return 'bg-purple-100 text-purple-700 border-purple-200';
       default: return 'bg-slate-100 text-slate-700';
@@ -346,25 +305,21 @@ export function DataAssets() {
             <span className="text-slate-300">|</span>
             <span>{asset.lastUpdate}</span>
             <div className="flex items-center gap-0.5 ml-1">
-              {asset.type !== 'platform' && (
-                <>
-                  <button
-                    onClick={() => toggleAssetStatus(asset.id)}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
-                    title={asset.status === 'active' ? '暂停接收' : '恢复接收'}
-                  >
-                    {asset.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  </button>
-                  {asset.type === 'upload' && (
-                    <button
-                      onClick={() => handleDelete(asset)}
-                      className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500"
-                      title="删除"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </>
+              <button
+                onClick={() => toggleAssetStatus(asset.id)}
+                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600"
+                title={asset.status === 'active' ? '暂停接收' : '恢复接收'}
+              >
+                {asset.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </button>
+              {asset.type === 'upload' && (
+                <button
+                  onClick={() => handleDelete(asset)}
+                  className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500"
+                  title="删除"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
               )}
               <button
                 onClick={() => setSelectedAsset(asset)}
@@ -399,7 +354,7 @@ export function DataAssets() {
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/80">数据总量</span>
-                <span className="font-bold">4.8 TB</span>
+                <span className="font-bold">2.5 TB</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/80">数据表数量</span>
@@ -407,8 +362,31 @@ export function DataAssets() {
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-white/80">总记录数</span>
-                <span className="font-bold">1.7 亿+</span>
+                <span className="font-bold">1,100 万+</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 基础数据服务说明 */}
+        <Card className="flex-shrink-0 border-blue-200 bg-blue-50/30">
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Cloud className="w-4 h-4 text-blue-500" />
+              基础数据服务
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 pb-3">
+            <p className="text-xs text-slate-600 leading-relaxed">
+              平台提供行业基础数据分析服务，支撑您的业务决策。所有数据均通过安全加密传输，严格保护您的数据隐私。
+            </p>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Shield className="w-3 h-3 text-green-500" />
+              <span>企业级加密存储</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <CheckCircle2 className="w-3 h-3 text-green-500" />
+              <span>严格隔离保护</span>
             </div>
           </CardContent>
         </Card>
@@ -419,23 +397,6 @@ export function DataAssets() {
             <CardTitle className="text-sm">数据来源分布</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 pb-3">
-            {/* 平台数据 */}
-            <div 
-              className={`p-2 rounded-lg cursor-pointer transition-all ${
-                activeFilter === 'platform' ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50'
-              }`}
-              onClick={() => setActiveFilter(activeFilter === 'platform' ? 'all' : 'platform')}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-medium text-slate-700">平台数据</span>
-                </div>
-                <Badge className="bg-blue-100 text-blue-700 text-xs">{platformAssets.length}</Badge>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">大卡鹰眼平台提供的核心数据</p>
-            </div>
-
             {/* 系统对接 */}
             <div 
               className={`p-2 rounded-lg cursor-pointer transition-all ${
@@ -561,21 +522,6 @@ export function DataAssets() {
 
         {/* 数据列表 */}
         <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-          {/* 平台数据 */}
-          {(activeFilter === 'all' || activeFilter === 'platform') && platformAssets.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Cloud className="w-4 h-4 text-blue-500" />
-                <h3 className="font-bold text-slate-800 text-sm">平台数据</h3>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">{platformAssets.length}</Badge>
-                <span className="text-xs text-slate-400">大卡鹰眼平台提供的核心数据资产，持续更新</span>
-              </div>
-              <div className="grid grid-cols-1 gap-2">
-                {platformAssets.map(renderAssetCard)}
-              </div>
-            </div>
-          )}
-
           {/* 系统对接 */}
           {(activeFilter === 'all' || activeFilter === 'system') && systemAssets.length > 0 && (
             <div>

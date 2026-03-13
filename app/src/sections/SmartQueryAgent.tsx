@@ -326,7 +326,7 @@ export function SmartQueryAgent() {
 
   // 输入状态
   const [input, setInput] = useState('');
-  const [analysisMode, setAnalysisMode] = useState<'quick' | 'deep'>('quick');
+  const [analysisMode, setAnalysisMode] = useState<'quick' | 'deep'>('deep');
   const [selectedTemplate, setSelectedTemplate] = useState<AnalysisTemplate | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
