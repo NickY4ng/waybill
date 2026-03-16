@@ -529,12 +529,40 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
         </div>
     </div>
 
-    <!-- ECharts图表库 -->
+    <!-- ECharts图表库（只加载一次） -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     
-    <!-- 图表初始化代码将由AI根据实际数据生成 -->
     <script>
-        // 图表初始化
+    // 图表初始化代码示例 - 请根据实际数据生成所有图表
+    document.addEventListener('DOMContentLoaded', function() {
+        // 检查ECharts是否加载成功
+        if (typeof echarts === 'undefined') {
+            document.querySelectorAll('.chart-container, .flow-map').forEach(function(el) {
+                el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">图表加载失败，请检查网络连接</div>';
+            });
+            return;
+        }
+        
+        // 示例：初始化第一个图表（请根据实际维度和数据生成所有图表）
+        var chart1 = echarts.init(document.getElementById('chart-1-1'));
+        var option1 = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['A', 'B', 'C'] },
+            yAxis: { type: 'value' },
+            series: [{ type: 'bar', data: [10, 20, 30] }]
+        };
+        chart1.setOption(option1);
+        
+        // 更多图表初始化代码...
+        // 请为每个图表容器（chart-1-1, chart-1-2, chart-2-1等）生成对应的初始化代码
+        
+        // 窗口大小改变时重新调整图表大小
+        window.addEventListener('resize', function() {
+            chart1.resize();
+            // 为每个图表调用resize()
+        });
+    });
     </script>
 </body>
 </html>
@@ -563,6 +591,11 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
 
 ### HTML图表关键要求
 
+- **【重要】ECharts只加载一次**：在HTML底部只加载一次 ECharts，不要重复加载
+- **【重要】完整的图表初始化代码**：必须包含完整的 DOMContentLoaded 事件监听包裹所有图表初始化代码
+- **【重要】检查ECharts加载状态**：在初始化图表前检查 echarts 是否已加载，如果加载失败显示友好提示
+- **【重要】每个图表都要初始化**：为HTML中定义的每个图表容器生成对应的 echarts init 和 setOption 代码
+- **【重要】包含resize处理**：在代码最后添加 resize 事件监听为每个图表调用 resize 方法
 - **多CDN源**：主CDN失败时自动尝试备用CDN
 - **错误处理**：所有CDN失败时显示友好提示
 - **容错机制**：单个图表失败不影响其他图表
