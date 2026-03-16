@@ -108,8 +108,8 @@ const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
 // 需求确认专家（第一阶段）
 const REQUIREMENT_EXPERT: Expert = {
   id: 'req',
-  name: 'Dr. Victoria Liu',
-  title: '首席需求分析师',
+  name: '首席需求分析师',
+  title: '',
   avatar: '🔍',
   specialty: '业务需求洞察与分析范围界定',
   status: 'idle',
@@ -122,8 +122,8 @@ const REQUIREMENT_EXPERT: Expert = {
 const ANALYSIS_EXPERTS: Expert[] = [
   {
     id: '1',
-    name: 'Alexander Chen',
-    title: '首席数据架构师',
+    name: '首席数据架构师',
+    title: '',
     avatar: '🎯',
     specialty: '分布式数据检索与清洗',
     status: 'idle',
@@ -133,8 +133,8 @@ const ANALYSIS_EXPERTS: Expert[] = [
   },
   {
     id: '2',
-    name: 'Sophia Laurent',
-    title: '高级物流算法专家',
+    name: '高级物流算法专家',
+    title: '',
     avatar: '🔮',
     specialty: '物流网络优化与流向预测',
     status: 'idle',
@@ -144,8 +144,8 @@ const ANALYSIS_EXPERTS: Expert[] = [
   },
   {
     id: '3',
-    name: 'Marcus Zhang',
-    title: '行业战略顾问',
+    name: '行业战略顾问',
+    title: '',
     avatar: '⚡',
     specialty: '供应链战略与行业洞察',
     status: 'idle',
@@ -155,8 +155,8 @@ const ANALYSIS_EXPERTS: Expert[] = [
   },
   {
     id: '4',
-    name: 'Isabella Wong',
-    title: '数据可视化总监',
+    name: '数据可视化总监',
+    title: '',
     avatar: '💎',
     specialty: '交互式可视化与报告设计',
     status: 'idle',
@@ -1060,7 +1060,7 @@ export function SmartQueryAgent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-bold text-slate-800">{requirementExpert.name}</span>
-                      <span className="text-xs text-slate-500 ml-2">{requirementExpert.title}</span>
+                      {requirementExpert.title && <span className="text-xs text-slate-500 ml-2">{requirementExpert.title}</span>}
                     </div>
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                       requirementExpert.status === 'working'
@@ -1123,7 +1123,7 @@ export function SmartQueryAgent() {
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-slate-400">{expert.name}</div>
-                      <div className="text-xs text-slate-300">{expert.title}</div>
+                      {expert.title && <div className="text-xs text-slate-300">{expert.title}</div>}
                     </div>
                     <span className="text-xs text-slate-300 px-2 py-1 rounded-full bg-slate-100">等待激活</span>
                   </div>
@@ -1158,7 +1158,7 @@ export function SmartQueryAgent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-bold text-slate-800">{requirementExpert.name}</span>
-                      <span className="text-xs text-slate-500 ml-2">{requirementExpert.title}</span>
+                      {requirementExpert.title && <span className="text-xs text-slate-500 ml-2">{requirementExpert.title}</span>}
                     </div>
                     <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">已完成</span>
                   </div>
@@ -1211,7 +1211,7 @@ export function SmartQueryAgent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="font-bold text-slate-800">{expert.name}</span>
-                          <span className="text-xs text-slate-500 ml-2">{expert.title}</span>
+                          {expert.title && <span className="text-xs text-slate-500 ml-2">{expert.title}</span>}
                         </div>
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                           expert.status === 'working'
