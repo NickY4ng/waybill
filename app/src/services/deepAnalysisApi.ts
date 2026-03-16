@@ -543,7 +543,7 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
             return;
         }
         
-        // 示例：初始化第一个图表（请根据实际维度和数据生成所有图表）
+        // 示例1：柱状图（通用分析）
         var chart1 = echarts.init(document.getElementById('chart-1-1'));
         var option1 = {
             tooltip: { trigger: 'axis' },
@@ -554,8 +554,23 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
         };
         chart1.setOption(option1);
         
-        // 更多图表初始化代码...
-        // 请为每个图表容器（chart-1-1, chart-1-2, chart-2-1等）生成对应的初始化代码
+        // 示例2：地理流向分析必须使用桑基图（严禁使用geo/map）
+        // var chartFlow = echarts.init(document.getElementById('chart-flow'));
+        // var flowOption = {
+        //     tooltip: { trigger: 'item', triggerOn: 'mousemove' },
+        //     series: [{
+        //         type: 'sankey',
+        //         layout: 'none',
+        //         emphasis: { focus: 'adjacency' },
+        //         data: [{ name: '发货地A' }, { name: '发货地B' }, { name: '收货地X' }],
+        //         links: [{ source: '发货地A', target: '收货地X', value: 100 }],
+        //         lineStyle: { color: 'gradient', curveness: 0.5 }
+        //     }]
+        // };
+        // chartFlow.setOption(flowOption);
+        
+        // 【重要】请为每个图表容器生成对应的初始化代码
+        // 地理流向分析必须使用桑基图(sankey)或柱状图(bar)，严禁使用geo/map
         
         // 窗口大小改变时重新调整图表大小
         window.addEventListener('resize', function() {
@@ -583,6 +598,11 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
    - **可视化图表**（1-2个，使用ECharts）
    - **数据洞察**（100-150字专业解读）
    - **核心发现**（2-3条关键结论）
+   
+   【绝对禁止 - 违反会导致图表无法显示】地理流向分析必须使用以下图表类型：
+   - 首选：桑基图（sankey）展示起点到终点的流量关系
+   - 备选：柱状图（bar）展示各线路运量对比
+   - 严禁：geo坐标系、map地图、lines配合coordinateSystem: 'geo'
 
 3. **专业建议**
    - 策略优化建议
@@ -600,7 +620,7 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
 - **错误处理**：所有CDN失败时显示友好提示
 - **容错机制**：单个图表失败不影响其他图表
 - **离线可用**：下载后只要有网络就能显示图表
-- **【重要】禁止使用地图图表**：不要使用 geo 坐标系或 map: china 等需要地图数据的图表类型。对于流向分析，请使用 桑基图（sankey） 替代地图流向图
+- **【绝对禁止】使用地图图表**：严禁使用 geo 坐标系、map: china、lines 配合 coordinateSystem: geo 等需要地图数据的图表。地理流向分析必须使用 桑基图（sankey） 或 柱状图（bar）
 
 ## 输出原则
 
@@ -619,6 +639,8 @@ const DEEP_ANALYSIS_SYSTEM_PROMPT = `# 大卡鹰眼 - 深度分析专家
 - 禁止少于8个分析维度
 - 禁止图表没有专业解读
 - 禁止建议空泛不可执行
+- 【绝对禁止】地理流向分析使用地图图表（geo/map/lines+geo），必须使用桑基图或柱状图
+- 【绝对禁止】生成任何需要加载外部地图数据（如中国地图JSON）的图表
 
 请现在开始，等待用户提出深度分析需求。`;
 
