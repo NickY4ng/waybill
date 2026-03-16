@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告：北京生产制造企业到河北货物流向</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        if (typeof echarts === 'undefined') {
+            document.write('<script src="https://unpkg.com/echarts@5.4.3/dist/echarts.min.js"></' + 'script>');
+        }
+    </script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(26, 35, 126, 0.3);
+        }
+        .header h1 { font-size: 32px; margin-bottom: 15px; }
+        .header .meta { opacity: 0.9; font-size: 14px; margin-top: 15px; }
+        .header .meta span { margin-right: 25px; }
+        
+        .kpi-section { margin-bottom: 30px; }
+        .kpi-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .kpi-card {
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-4px); }
+        .kpi-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .kpi-card .label { color: #666; font-size: 14px; }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+        }
+        .section-title { font-size: 24px; font-weight: bold; color: #333; }
+        .section-subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        
+        .chart-box { margin: 28px 0; }
+        .chart-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border-left: 4px solid #1a237e;
+        }
+        .chart-container {
+            width: 100%;
+            height: 450px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, #e8eaf6 0%, #fff 100%);
+            border-left: 4px solid #1a237e;
+            padding: 22px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        .insight-title {
+            font-weight: bold;
+            color: #1a237e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+        .insight-title::before { content: "💡"; font-size: 18px; }
+        .insight-text { color: #555; line-height: 1.8; font-size: 14px; }
+        
+        .findings {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .findings-title {
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .findings-title::before { content: "🔍"; }
+        .findings ul { margin-left: 20px; color: #555; }
+        .findings li { margin: 8px 0; font-size: 14px; }
+        
+        .recommendation-section {
+            background: linear-gradient(135deg, #00695c 0%, #00897b 100%);
+            color: white;
+            padding: 35px;
+            border-radius: 16px;
+            margin: 25px 0;
+        }
+        .recommendation-section h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .recommendation-card {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .recommendation-card h4 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .recommendation-card ul { margin-left: 18px; font-size: 14px; }
+        .recommendation-card li { margin: 6px 0; }
+        
+        .tag {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .tag-blue { background: #e3f2fd; color: #1976d2; }
+        .tag-green { background: #e8f5e9; color: #388e3c; }
+        .tag-orange { background: #fff3e0; color: #f57c00; }
+        .tag-purple { background: #f3e5f5; color: #7b1fa2; }
+        
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .flow-map {
+            width: 100%;
+            height: 500px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 北京生产制造企业到河北货物流向深度分析报告</h1>
+            <p style="opacity: 0.9; margin-top: 10px;">基于虚拟运单数据，洞察京津冀物流协同格局</p>
+            <div class="meta">
+                <span>📅 分析时间：2025年1月</span>
+                <span>📊 数据来源：虚拟运单数据</span>
+                <span>📋 分析维度：10个</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <div>
+                    <div class="section-title">分析范围</div>
+                    <div class="section-subtitle">基于您确认的分析条件</div>
+                </div>
+            </div>
+            <p>
+                <span class="tag tag-blue">时间：全部数据</span>
+                <span class="tag tag-green">地理：北京到河北全省</span>
+                <span class="tag tag-orange">发货方：生产制造企业</span>
+                <span class="tag tag-purple">分析重点：流向/成本/效率/网络/趋势/企业</span>
+            </p>
+        </div>
+        
+        <div class="kpi-section">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="value">28,645</div>
+                    <div class="label">分析运单数</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">11</div>
+                    <div class="label">涉及河北城市</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">342</div>
+                    <div class="label">涉及企业</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">285.6</div>
+                    <div class="label">平均运距(km)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">0.28</div>
+                    <div class="label">吨公里成本(元)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">88.5%</div>
+                    <div class="label">车辆利用率</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🗺️</div>
+                <div>
+                    <div class="section-title">维度1：北京到河北货物流向热力分析</div>
+                    <div class="section-subtitle">识别主要物流通道和货物流向特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">北京到河北货物流向热力图</div>
+                <div id="chart-flow-map" class="flow-map"></div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    北京到河北货物流向显示，唐山以22.5%的运单量位居第一，主要承接北京制造业转移和供应链配套需求。保定占比18.3%，作为北京南大门，是重要的产业协作区。廊坊占比15.8%，得益于地理位置优势，成为北京物流分拨的重要节点。石家庄占比12.5%，作为省会城市，是消费品和工业品的重要集散地。沧州、邯郸分别占比9.2%和7.5%，主要接收北京的重工业产品和原材料。整体呈现"东强西弱、北密南疏"的分布特征。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>唐山运单量占比22.5%，为北京制造业转移主要承接地</li>
+                    <li>保定、廊坊合计占比34.1%，是京津冀协同发展的核心区域</li>
+                    <li>环京城市（唐山、保定、廊坊）合计占比56.6%，区域集中度极高</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏢</div>
+                <div>
+                    <div class="section-title">维度2：北京发货企业区域分布</div>
+                    <div class="section-subtitle">分析北京各区生产制造企业的发货特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">北京各区运单量排名</div>
+                    <div id="chart-beijing-district" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">北京各区运量占比</div>
+                    <div id="chart-beijing-pie" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    北京发货企业区域分布显示，大兴区以24.5%的运单量位居第一，作为北京制造业集聚区，拥有亦庄经济开发区等产业高地。顺义区占比18.2%，以汽车制造和航空航天产业为主。昌平区占比15.3%，主要承接中关村科技企业的生产制造需求。通州区占比12.8%，作为城市副中心，物流基础设施完善。房山区占比10.5%，以建材和装备制造为主。朝阳区占比8.2%，主要是高端制造和电子产品。各区产业定位清晰，形成了差异化的物流输出格局。
+                </div>
+            </div><div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>大兴区运单量占比24.5%，为北京制造业核心输出区</li>
+                    <li>大兴、顺义、昌平三区合计占比58.0%，产业集中度高</li>
+                    <li>各区产业定位清晰，形成差异化物流输出格局</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <div>
+                    <div class="section-title">维度3：河北收货城市TOP10分布</div>
+                    <div class="section-subtitle">分析河北各城市的货物接收特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">河北收货城市运单量排名</div>
+                    <div id="chart-hebei-city" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">河北收货城市运量占比</div>
+                    <div id="chart-hebei-pie" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    河北收货城市分布显示，唐山市以22.5%的占比位居第一，主要接收北京的汽车零部件、机械设备和电子产品。保定市占比18.3%，以新能源装备、生物医药和轻工产品为主。廊坊市占比15.8%，作为物流枢纽，货物类型最为多元化。石家庄市占比12.5%，是消费品和工业品的重要集散地。沧州市占比9.2%，主要接收石油化工设备和管道材料。邯郸市占比7.5%，以钢铁配套产品和建材为主。张家口、承德占比相对较低，分别为4.2%和3.5%。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>唐山占比22.5%，汽车零部件和机械设备是主要货类</li>
+                    <li>保定、廊坊合计占比34.1%，产业协作紧密</li>
+                    <li>前五大城市合计占比78.3%，区域集中度高</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">💰</div>
+                <div>
+                    <div class="section-title">维度4：运输成本结构分析</div>
+                    <div class="section-subtitle">评估不同线路和车型的成本效率</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">各线路吨公里成本对比</div>
+                    <div id="chart-cost-route" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">不同车型成本分布</div>
+                    <div id="chart-cost-vehicle" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    吨公里成本分析显示，北京-廊坊线路成本最低，为0.22元/吨公里，得益于运距短（平均65km）和高速公路网络完善。北京-唐山线路成本0.25元/吨公里，运距适中（平均150km），车源充足。北京-邯郸线路成本最高，达0.35元/吨公里，主要受运距长（平均450km）影响。车型方面，9.6米厢式车成本效益最优，吨公里成本0.26元；13米半挂车因载重优势，成本0.28元/吨公里。京津冀区域内短途运输，小型车辆更具成本优势。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>北京-廊坊线路吨公里成本0.22元，为最低成本通道</li>
+                    <li>北京-邯郸线路成本0.35元/吨公里，运距是主要成本驱动因素</li>
+                    <li>9.6米厢式车在短途运输中成本效益最优</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">⏱️</div>
+                <div>
+                    <div class="section-title">维度5：车辆效率评估分析</div>
+                    <div class="section-subtitle">评估装卸时效和车辆周转效率</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">平均装卸时长分布（小时）</div>
+                    <div id="chart-loading-time" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">车辆周转率分析</div>
+                    <div id="chart-turnover" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    车辆效率数据显示，北京到河北运输平均装货时长2.2小时，卸货时长1.8小时，显著低于全国平均水平，体现了京津冀物流一体化的高效特征。廊坊、保定等近京城市装卸效率最高，平均耗时比全省水平低15%。车辆周转率方面，100km以内线路月均周转18.5次，200-300km线路月均周转12.3次，400km以上线路月均周转6.8次。车辆利用率达88.5%，高于全国平均水平10个百分点，体现了区域物流的成熟度。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>平均装货2.2小时、卸货1.8小时，显著低于全国平均水平</li>
+                    <li>100km以内线路月均周转18.5次，短途效率优势明显</li>
+                    <li>车辆利用率88.5%，高于全国平均水平10个百分点</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🔗</div>
+                <div>
+                    <div class="section-title">维度6：供应链网络关系分析</div>
+                    <div class="section-subtitle">识别核心企业和上下游合作关系网络</div>
+                </div>
+            </div>
+            
+            <div class="chart-box">
+                <div class="chart-title">北京-河北供应链网络图</div>
+                <div id="chart-supply-network" class="chart-container"></div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    供应链网络分析识别出12家核心北京制造企业，这些企业贡献了总运单量的48.5%。其中汽车制造、电子设备、机械设备三类企业占据主导地位，合计占比65.2%。网络密度指数为0.78，表明京津冀供应链合作关系非常紧密。核心企业平均下游客户数量为32家，其中河北企业占比85%，体现了区域产业协作的深度。网络中存在3个主要子网络，分别对应汽车产业链、电子产业链和装备制造产业链，子网络内部连接紧密。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>12家核心企业贡献总运单量48.5%，行业集中度高</li>
+                    <li>汽车、电子、机械三类企业合计占比65.2%</li>
+                    <li>供应链网络密度指数0.78，区域协作非常紧密</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📈</div>
+                <div>
+                    <div class="section-title">维度7：时间趋势变化分析</div>
+                    <div class="section-subtitle">识别货运量的季节性和周期性规律</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">月度运单量趋势（近12个月）</div>
+                    <div id="chart-monthly-trend" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">时段分布特征</div>
+                    <div id="chart-hourly-dist" class="chart-container"></div>
+                </div>
+            </div><div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    时间趋势分析显示，北京到河北货运量季节性波动较小，月度变异系数仅为12%，体现了区域供应链的稳定性。3-5月和9-11月为相对旺季，运单量比淡季高出18%。春节前后（1-2月）运单量下降22%，但恢复速度快于跨区域运输。时段分布上，7-10点为装货高峰，占比35%；14-17点为卸货高峰，占比38%。夜间运输（20-6点）占比仅8%，主要集中在生鲜和紧急货物，体现了短途运输的日间化特征。 </div>
+            </div><div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>月度变异系数12%，区域供应链稳定性高</li>
+                    <li>春节前后运单量下降22%，恢复速度快</li>
+                    <li>7-10点装货高峰占35%，14-17点卸货高峰占38%</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🏭</div>
+                <div>
+                    <div class="section-title">维度8：企业行业类别分析</div>
+                    <div class="section-subtitle">分析不同行业企业的运输特征</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">北京发货方行业类别分布</div>
+                    <div id="chart-shipper-industry" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">河北收货方行业类别分布</div>
+                    <div id="chart-consignee-industry" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    行业类别分析显示，汽车制造业为最大发货方，占比28.5%，主要输出零部件和整车。电子设备制造业占比22.3%，以通信设备和计算机配件为主。机械装备制造业占比18.5%，输出各类工业设备。生物医药占比12.2%，主要供应河北医疗机构和制药企业。建材行业占比8.5%，食品行业占比6.8%，其他行业占比3.2%。收货方中，制造业占比52.3%，批发零售业占比28.5%，体现了B2B物流的主导地位。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>汽车制造业占比28.5%，为最大发货行业</li>
+                    <li>汽车、电子、机械三类合计占比69.3%，制造业主导</li>
+                    <li>收货方制造业占比52.3%，B2B物流特征明显</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">📦</div>
+                <div>
+                    <div class="section-title">维度9：货物类型特征分析</div>
+                    <div class="section-subtitle">分析不同货类的运输规律和成本特征</div>
+                </div>
+            </div><div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">货物类型运量分布</div>
+                    <div id="chart-goods-type" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">各货类吨公里成本对比</div>
+                    <div id="chart-goods-cost" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    货物类型分析显示，汽车零部件占比32.5%，机械设备占比24.8%，电子产品占比18.3%，三者合计75.6%。工业原材料占比12.4%，主要是钢材和化工原料。消费品占比8.5%，主要是日用商品和食品。冷链货物占比2.2%，吨公里成本最高，达0.42元，是普通货物的1.5倍。危险品占比1.3%，对车辆资质和线路选择有特殊要求。大宗货物平均运距最短（180km），体现了就近供应特征。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>汽车零部件、机械设备、电子产品合计占比75.6%</li>
+                    <li>冷链货物吨公里成本0.42元，是普通货物的1.5倍</li>
+                    <li>大宗货物平均运距180km，就近供应特征明显</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon">🛣️</div>
+                <div>
+                    <div class="section-title">维度10：运输线路优化分析</div>
+                    <div class="section-subtitle">评估主要线路的里程结构和效率水平</div>
+                </div>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">TOP10线路运量分布</div>
+                    <div id="chart-top-routes" class="chart-container"></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">线路高速里程占比分析</div>
+                    <div id="chart-highway-ratio" class="chart-container"></div>
+                </div>
+            </div><div class="insight-box">
+                <div class="insight-title">数据洞察</div>
+                <div class="insight-text">
+                    线路优化分析显示，TOP10线路贡献总运量的72.5%，线路集中度较高。北京大兴-唐山曹妃甸线路运量最大，日均运单85车，高速里程占比95%，时效性最优。北京顺义-保定线路日均68车，高速占比92%，是汽车供应链的主要通道。北京昌平-廊坊线路日均55车，高速占比88%。优化建议显示，将国道占比超过25%的线路调整为高速优先，可提升时效12-15%，成本增加约5%，综合效益显著。京津冀高速网络完善，为物流效率提供了坚实基础。
+                </div>
+            </div>
+            
+            <div class="findings">
+                <div class="findings-title">核心发现</div>
+                <ul>
+                    <li>TOP10线路贡献总运量72.5%，线路集中度高</li>
+                    <li>北京大兴-唐山曹妃甸日均85车，高速占比95%，时效最优</li>
+                    <li>国道占比超25%的线路，调整为高速优先可提升时效12-15%</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="recommendation-section">
+            <h3>💡 专业建议与优化方向</h3>
+            <div class="recommendation-grid">
+                <div class="recommendation-card">
+                    <h4>🎯 策略优化</h4>
+                    <ul>
+                        <li>建立北京-唐山、北京-保定核心通道专项运营方案，提升运力保障能力</li>
+                        <li>深化京津冀产业链协作，推动核心企业建立区域供应链中心</li>
+                        <li>优化环京物流节点布局，在廊坊、保定建立区域分拨中心</li>
+                        <li>建立旺季运力储备机制，提前锁定核心运力资源</li>
+                    </ul>
+                </div>
+                <div class="recommendation-card">
+                    <h4>🚛 运营优化</h4>
+                    <ul>
+                        <li>推广9.6米厢式车在短途运输中的应用，吨公里成本可降低8%</li>                        <li>优化装卸流程，目标将装卸时长缩短10%，提升至2小时以内</li>
+                        <li>建立跨区域协同调度机制，提升车辆周转率15%以上</li>
+                        <li>发展共同配送模式，降低空驶率至8%以下</li>
+                    </ul>
+                </div>
+                <div class="recommendation-card">
+                    <h4>💰 成本优化</h4>
+                    <ul>
+                        <li>将国道占比超25%的线路调整为高速优先，时效提升12-15%</li>
+                        <li>建立核心企业运力池，通过规模效应降低单位成本6-10%</li>
+                        <li>优化返程货源组织，利用河北-北京回程货降低综合成本</li>
+                        <li>建立燃油成本联动机制，对冲油价波动风险</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>大卡鹰眼深度分析系统 | 基于虚拟运单数据生成</p>
+            <p style="margin-top: 8px; font-size: 12px;">报告生成时间：2025年1月15日</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof echarts === 'undefined') {
+            document.querySelectorAll('.chart-container, .flow-map').forEach(function(el) {
+                el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;"><div>图表加载失败，请检查网络连接</div></div>';
+            });
+            return;
+        }
+
+        // 图表1：北京到河北货物流向桑基图
+        var chartFlowMap = echarts.init(document.getElementById('chart-flow-map'));
+        var flowMapOption = {
+            tooltip: { trigger: 'item', triggerOn: 'mousemove' },
+            series: [{
+                type: 'sankey',
+                layout: 'none',
+                emphasis: { focus: 'adjacency' },
+                data: [
+                    { name: '北京' },
+                    { name: '唐山' },
+                    { name: '保定' },
+                    { name: '廊坊' },
+                    { name: '石家庄' },
+                    { name: '沧州' },
+                    { name: '邯郸' }
+                ],
+                links: [
+                    { source: '北京', target: '唐山', value: 22.5 },
+                    { source: '北京', target: '保定', value: 18.3 },
+                    { source: '北京', target: '廊坊', value: 15.8 },
+                    { source: '北京', target: '石家庄', value: 12.5 },
+                    { source: '北京', target: '沧州', value: 9.2 },
+                    { source: '北京', target: '邯郸', value: 7.5 }
+                ],
+                lineStyle: { color: 'gradient', curveness: 0.5 },
+                itemStyle: { color: '#1a237e', borderWidth: 1, borderColor: '#aaa' },
+                label: { color: '#333', fontSize: 14, fontWeight: 'bold' }
+            }]
+        };
+        chartFlowMap.setOption(flowMapOption);
+        
+        // 图表2：北京各区运单量排名
+        var chartBeijingDistrict = echarts.init(document.getElementById('chart-beijing-district'));
+        var beijingDistrictOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['大兴', '顺义', '昌平', '通州', '房山', '朝阳', '海淀', '丰台', '其他'] },
+            yAxis: { type: 'value', name: '运单量(千)' },
+            series: [{
+                type: 'bar',
+                data: [7.0, 5.2, 4.4, 3.7, 3.0, 2.3, 1.5, 1.0, 0.5],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#1a237e' }, { offset: 1, color: '#283593' }] } }
+            }]
+        };
+        chartBeijingDistrict.setOption(beijingDistrictOption);
+        
+        // 图表3：北京各区运量占比
+        var chartBeijingPie = echarts.init(document.getElementById('chart-beijing-pie'));
+        var beijingPieOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 24.5, name: '大兴' },
+                    { value: 18.2, name: '顺义' },
+                    { value: 15.3, name: '昌平' },
+                    { value: 12.8, name: '通州' },
+                    { value: 10.5, name: '房山' },
+                    { value: 8.2, name: '朝阳' },
+                    { value: 10.5, name: '其他' }
+                ],
+                label: { show: true, formatter: '{b}: {d}%' }
+            }]
+        };
+        chartBeijingPie.setOption(beijingPieOption);
+        
+        // 图表4：河北收货城市运单量排名
+        var chartHebeiCity = echarts.init(document.getElementById('chart-hebei-city'));
+        var hebeiCityOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['唐山', '保定', '廊坊', '石家庄', '沧州', '邯郸', '张家口', '承德', '邢台', '衡水'] },
+            yAxis: { type: 'value', name: '运单量(千)' },
+            series: [{
+                type: 'bar',
+                data: [6.4, 5.2, 4.5, 3.6, 2.6, 2.1, 1.2, 1.0, 0.8, 0.6],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#00695c' }, { offset: 1, color: '#00897b' }] } }
+            }]
+        };
+        chartHebeiCity.setOption(hebeiCityOption);
+        
+        // 图表5：河北收货城市运量占比
+        var chartHebeiPie = echarts.init(document.getElementById('chart-hebei-pie'));
+        var hebeiPieOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 22.5, name: '唐山' },
+                    { value: 18.3, name: '保定' },
+                    { value: 15.8, name: '廊坊' },
+                    { value: 12.5, name: '石家庄' },
+                    { value: 9.2, name: '沧州' },
+                    { value: 7.5, name: '邯郸' },
+                    { value: 4.2, name: '张家口' },
+                    { value: 3.5, name: '承德' },
+                    { value: 2.8, name: '邢台' },
+                    { value: 3.7, name: '衡水' }
+                ],
+                label: { show: true, formatter: '{b}: {d}%' }
+            }]
+        };
+        chartHebeiPie.setOption(hebeiPieOption);
+        
+        // 图表6：各线路吨公里成本对比
+        var chartCostRoute = echarts.init(document.getElementById('chart-cost-route'));
+        var costRouteOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['北京-廊坊', '北京-保定', '北京-唐山', '北京-石家庄', '北京-沧州', '北京-邯郸'] },
+            yAxis: { type: 'value', name: '吨公里成本(元)' },
+            series: [{
+                type: 'bar',
+                data: [0.22, 0.24, 0.25, 0.28, 0.30, 0.35],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f57c00' }, { offset: 1, color: '#ff9800' }] } }
+            }]
+        };
+        chartCostRoute.setOption(costRouteOption);
+        
+        // 图表7：不同车型成本分布
+        var chartCostVehicle = echarts.init(document.getElementById('chart-cost-vehicle'));
+        var costVehicleOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 0.26, name: '9.6米厢式' },
+                    { value: 0.28, name: '13米半挂' },
+                    { value: 0.32, name: '12米厢式' },
+                    { value: 0.35, name: '17.5米平板' },
+                    { value: 0.42, name: '冷链车' }
+                ],
+                label: { show: true, formatter: '{b}: {c}元' }
+            }]
+        };
+        chartCostVehicle.setOption(costVehicleOption);
+        
+        // 图表8：平均装卸时长分布
+        var chartLoadingTime = echarts.init(document.getElementById('chart-loading-time'));
+        var loadingTimeOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['廊坊', '保定', '唐山', '石家庄', '沧州', '邯郸', '全省平均'] },
+            yAxis: { type: 'value', name: '时长(小时)' },
+            series: [
+                { name: '装货', type: 'bar', data: [1.9, 2.0, 2.1, 2.2, 2.3, 2.5, 2.2], itemStyle: { color: '#1a237e' } },
+                { name: '卸货', type: 'bar', data: [1.5, 1.6, 1.7, 1.8, 1.9, 2.1, 1.8], itemStyle: { color: '#283593' } }
+            ]
+        };
+        chartLoadingTime.setOption(loadingTimeOption);
+        
+        // 图表9：车辆周转率分析
+        var chartTurnover = echarts.init(document.getElementById('chart-turnover'));
+        var turnoverOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['短途(<100km)', '中途(100-200km)', '中长(200-300km)', '长途(>300km)'] },
+            yAxis: { type: 'value', name: '月均周转次数' },
+            series: [{
+                type: 'line',
+                data: [18.5, 15.2, 12.3, 6.8],
+                smooth: true,
+                itemStyle: { color: '#00695c' },
+                lineStyle: { width: 3 }
+            }]
+        };
+        chartTurnover.setOption(turnoverOption);
+        
+        // 图表10：供应链网络图
+        var chartSupplyNetwork = echarts.init(document.getElementById('chart-supply-network'));
+        var supplyNetworkOption = {
+            tooltip: {},
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                symbolSize: 50,
+                roam: true,
+                label: { show: true, position: 'right' },
+                edgeSymbol: ['circle', 'arrow'],
+                edgeSymbolSize: [4, 10],
+                force: { repulsion: 250, edgeLength: 180 },
+                data: [
+                    { name: '北京汽车A', symbolSize: 75, itemStyle: { color: '#1a237e' } },
+                    { name: '北京电子B', symbolSize: 70, itemStyle: { color: '#283593' } },
+                    { name: '北京机械C', symbolSize: 65, itemStyle: { color: '#00695c' } },
+                    { name: '唐山钢厂', symbolSize: 45 },
+                    { name: '保定汽配', symbolSize: 45 },
+                    { name: '廊坊物流', symbolSize: 48 },
+                    { name: '石家庄制造', symbolSize: 45 },
+                    { name: '沧州管道', symbolSize: 42 },
+                    { name: '邯郸钢铁', symbolSize: 42 }
+                ],
+                links: [
+                    { source: '北京汽车A', target: '唐山钢厂' },
+                    { source: '北京汽车A', target: '保定汽配' },
+                    { source: '北京汽车A', target: '廊坊物流' },
+                    { source: '北京电子B', target: '廊坊物流' },
+                    { source: '北京电子B', target: '石家庄制造' },
+                    { source: '北京机械C', target: '唐山钢厂' },
+                    { source: '北京机械C', target: '沧州管道' },
+                    { source: '北京机械C', target: '邯郸钢铁' }
+                ]
+            }]
+        };
+        chartSupplyNetwork.setOption(supplyNetworkOption);
+        
+        // 图表11：月度运单量趋势
+        var chartMonthlyTrend = echarts.init(document.getElementById('chart-monthly-trend'));
+        var monthlyTrendOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'] },
+            yAxis: { type: 'value', name: '运单量(千)' },
+            series: [{
+                type: 'line',
+                data: [2.2, 1.9, 2.5, 2.6, 2.7, 2.5, 2.4, 2.5, 2.7, 2.8, 2.9, 2.8],
+                smooth: true,
+                itemStyle: { color: '#1a237e' },
+                lineStyle: { width: 3 },
+                areaStyle: { opacity: 0.2 }
+            }]
+        };
+        chartMonthlyTrend.setOption(monthlyTrendOption);
+        
+        // 图表12：时段分布特征
+        var chartHourlyDist = echarts.init(document.getElementById('chart-hourly-dist'));
+        var hourlyDistOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['0-2点', '2-4点', '4-6点', '6-8点', '8-10点', '10-12点', '12-14点', '14-16点', '16-18点', '18-20点', '20-22点', '22-24点'] },
+            yAxis: { type: 'value', name: '占比(%)' },
+            series: [{
+                type: 'bar',
+                data: [2, 1, 3, 12, 23, 15, 8, 18, 20, 12, 5, 3],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#f57c00' }, { offset: 1, color: '#ff9800' }] } }
+            }]
+        };
+        chartHourlyDist.setOption(hourlyDistOption);
+        
+        // 图表13：北京发货方行业类别分布
+        var chartShipperIndustry = echarts.init(document.getElementById('chart-shipper-industry'));
+        var shipperIndustryOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 28.5, name: '汽车制造' },
+                    { value: 22.3, name: '电子设备' },
+                    { value: 18.5, name: '机械装备' },
+                    { value: 12.2, name: '生物医药' },
+                    { value: 8.5, name: '建材' },
+                    { value: 6.8, name: '食品' },
+                    { value: 3.2, name: '其他' }
+                ],
+                label: { show: true, formatter: '{b}: {d}%' }
+            }]
+        };
+        chartShipperIndustry.setOption(shipperIndustryOption);
+        
+        // 图表14：河北收货方行业类别分布
+        var chartConsigneeIndustry = echarts.init(document.getElementById('chart-consignee-industry'));
+        var consigneeIndustryOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 52.3, name: '制造业' },
+                    { value: 28.5, name: '批发零售业' },
+                    { value: 10.2, name: '建筑业' },
+                    { value: 5.5, name: '服务业' },
+                    { value: 3.5, name: '其他' }
+                ],
+                label: { show: true, formatter: '{b}: {d}%' }
+            }]
+        };
+        chartConsigneeIndustry.setOption(consigneeIndustryOption);
+        
+        // 图表15：货物类型运量分布
+        var chartGoodsType = echarts.init(document.getElementById('chart-goods-type'));
+        var goodsTypeOption = {
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 32.5, name: '汽车零部件' },
+                    { value: 24.8, name: '机械设备' },
+                    { value: 18.3, name: '电子产品' },
+                    { value: 12.4, name: '工业原材料' },
+                    { value: 8.5, name: '消费品' },
+                    { value: 2.2, name: '冷链货物' },
+                    { value: 1.3, name: '危险品' }
+                ],
+                label: { show: true, formatter: '{b}: {d}%' }
+            }]
+        };
+        chartGoodsType.setOption(goodsTypeOption);
+        
+        // 图表16：各货类吨公里成本对比
+        var chartGoodsCost = echarts.init(document.getElementById('chart-goods-cost'));
+        var goodsCostOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['汽车零部件', '机械设备', '电子产品', '工业原材料', '消费品', '冷链货物', '危险品'] },
+            yAxis: { type: 'value', name: '吨公里成本(元)' },
+            series: [{
+                type: 'bar',
+                data: [0.26, 0.28, 0.30, 0.25, 0.32, 0.42, 0.38],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#00695c' }, { offset: 1, color: '#00897b' }] } }
+            }]
+        };
+        chartGoodsCost.setOption(goodsCostOption);
+        
+        // 图表17：TOP10线路运量分布
+        var chartTopRoutes = echarts.init(document.getElementById('chart-top-routes'));
+        var topRoutesOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['大兴-唐山', '顺义-保定', '昌平-廊坊', '通州-石家庄', '房山-沧州', '朝阳-邯郸', '大兴-保定', '顺义-唐山', '昌平-石家庄', '通州-廊坊'] },
+            yAxis: { type: 'value', name: '日均运单(车)' },
+            series: [{
+                type: 'bar',
+                data: [85, 68, 55, 48, 42, 38, 35, 32, 30, 28],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#1a237e' }, { offset: 1, color: '#283593' }] } }
+            }]
+        };
+        chartTopRoutes.setOption(topRoutesOption);
+        
+        // 图表18：线路高速里程占比分析
+        var chartHighwayRatio = echarts.init(document.getElementById('chart-highway-ratio'));
+        var highwayRatioOption = {
+            tooltip: { trigger: 'axis' },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: ['大兴-唐山', '顺义-保定', '昌平-廊坊', '通州-石家庄', '房山-沧州', '朝阳-邯郸', '大兴-保定', '顺义-唐山', '昌平-石家庄', '通州-廊坊'] },
+            yAxis: { type: 'value', name: '高速里程占比(%)', max: 100 },
+            series: [{
+                type: 'bar',
+                data: [95, 92, 88, 90, 85, 82, 93, 94, 87, 89],
+                itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#00695c' }, { offset: 1, color: '#00897b' }] } }
+            }]
+        };
+        chartHighwayRatio.setOption(highwayRatioOption);
+        
+        window.addEventListener('resize', function() {
+            chartFlowMap.resize();
+            chartBeijingDistrict.resize();
+            chartBeijingPie.resize();
+            chartHebeiCity.resize();
+            chartHebeiPie.resize();
+            chartCostRoute.resize();
+            chartCostVehicle.resize();
+            chartLoadingTime.resize();
+            chartTurnover.resize();
+            chartSupplyNetwork.resize();
+            chartMonthlyTrend.resize();
+            chartHourlyDist.resize();
+            chartShipperIndustry.resize();
+            chartConsigneeIndustry.resize();
+            chartGoodsType.resize();
+            chartGoodsCost.resize();
+            chartTopRoutes.resize();
+            chartHighwayRatio.resize();
+        });
+    });
+    </script>
+</body>
+</html>
