@@ -192,9 +192,9 @@ const ANALYSIS_STATUSES: QueryStatus[] = [
 
 // 示例问题
 const EXAMPLE_QUERIES = [
-  '分析一下全国货物流向',
+  '分析全国货物流向',
   '给我输出一个物流时效的分析方案',
-  '统计一下25年全年运单数',
+  '统计25年全年运单数',
 ];
 
 // 生成会话标题
