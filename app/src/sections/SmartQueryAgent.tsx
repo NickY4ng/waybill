@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Loader2, Sparkles, Plus, Trash2, Download, Eye, FileText, Check, X, Upload, Shield, Cpu, BarChart3, MapPin, TrendingUp, Users, Activity, Database, LineChart, FileBarChart, BrainCircuit, Maximize2, Minimize2, ChevronDown, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, Plus, Trash2, Download, Eye, FileText, Check, X, Upload, Shield, Cpu, BarChart3, MapPin, TrendingUp, Users, Activity, Database, LineChart, FileBarChart, BrainCircuit, Maximize2, Minimize2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { callBailianAgent, clearBailianSession, executeBailianQuery } from '@/services/bailianApi';
+import { clearBailianSession } from '@/services/bailianApi';
 import { callDeepAnalysisAgent, downloadHtmlReport, isHtmlReport, clearDeepAnalysisSession } from '@/services/deepAnalysisApi';
 import { incrementServiceCount } from '@/sections/Header';
 import ReactMarkdown from 'react-markdown';
@@ -227,79 +227,6 @@ const HtmlCodeHighlight = ({ code }: { code: string }) => {
   );
 };
 
-// 模式下拉选择框组件
-interface ModeSelectorProps {
-  currentMode: 'quick' | 'deep';
-  onModeChange: (mode: 'quick' | 'deep') => void;
-}
-
-const ModeSelector = ({ currentMode, onModeChange }: ModeSelectorProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // 点击外部关闭下拉框
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSelect = (mode: 'quick' | 'deep') => {
-    onModeChange(mode);
-    setIsOpen(false);
-  };
-
-  const modes = [
-    { id: 'quick', name: '快速模式', icon: Activity, color: 'blue' },
-    { id: 'deep', name: '深度分析模式', icon: BrainCircuit, color: 'purple' },
-  ];
-
-  const currentModeData = modes.find(m => m.id === currentMode);
-  const CurrentIcon = currentModeData?.icon || Activity;
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      {/* 触发按钮 */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-all"
-      >
-        <CurrentIcon className={`w-4 h-4 text-${currentModeData?.color}-500`} />
-        <span className="text-sm text-slate-700">{currentModeData?.name}</span>
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {/* 下拉选项 */}
-      {isOpen && (
-        <div className="absolute bottom-full left-0 mb-1 w-44 bg-white rounded-lg border border-slate-200 shadow-lg overflow-hidden z-50">
-          {modes.map((mode) => {
-            const Icon = mode.icon;
-            const isSelected = currentMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => handleSelect(mode.id as 'quick' | 'deep')}
-                className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors ${
-                  isSelected ? `bg-${mode.color}-50 text-${mode.color}-600` : 'text-slate-700'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isSelected ? `text-${mode.color}-500` : 'text-slate-400'}`} />
-                <span className="flex-1">{mode.name}</span>
-                {isSelected && <Check className="w-3.5 h-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export function SmartQueryAgent() {
   // 会话状态
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
@@ -325,7 +252,6 @@ export function SmartQueryAgent() {
 
   // 输入状态
   const [input, setInput] = useState('');
-  const [analysisMode, setAnalysisMode] = useState<'quick' | 'deep'>('deep');
   const [selectedTemplate, setSelectedTemplate] = useState<AnalysisTemplate | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -540,7 +466,6 @@ export function SmartQueryAgent() {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
-    setAnalysisMode('deep');
     setSelectedTemplate(null);
     setUploadedFile(null);
     setSelectedHtmlReport(null);
@@ -863,19 +788,6 @@ export function SmartQueryAgent() {
     setShowRightPanel(false);
     setSelectedHtmlReport(null);
     setActiveRightTab('engine');
-  };
-
-  // 切换分析模式
-  const handleModeChange = (mode: 'quick' | 'deep') => {
-    setAnalysisMode(mode);
-    if (mode === 'deep') {
-      // 切换到深度分析模式时，清除之前的深度分析会话，确保使用系统提示词
-      clearDeepAnalysisSession();
-      setAnalysisPhase('requirement');
-      setRequirementExpert(REQUIREMENT_EXPERT);
-      setAnalysisExperts(ANALYSIS_EXPERTS);
-      setCurrentExpertIndex(0);
-    }
   };
 
   // 渲染专家团队
