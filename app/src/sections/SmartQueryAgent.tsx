@@ -563,20 +563,17 @@ export function SmartQueryAgent() {
     }
 
     try {
-      // 构建完整提示词
+      // 构建完整提示词，直接使用用户输入
       let fullPrompt = input;
-      
-      // 添加深度分析指令前缀
-      fullPrompt = `【深度分析需求】${input}`;
       
       // 如果选择了模板，添加模板提示词
       if (selectedTemplate) {
-        fullPrompt = `${selectedTemplate.prompt}\n\n用户问题：${fullPrompt}`;
+        fullPrompt = `${selectedTemplate.prompt}\n\n${fullPrompt}`;
       }
       
       // 如果有上传文件，添加文件信息
       if (uploadedFile) {
-        fullPrompt += `\n\n【用户上传文件：${uploadedFile.name}】`;
+        fullPrompt += `\n\n用户上传文件：${uploadedFile.name}`;
       }
 
       // 统一调用深度分析接口

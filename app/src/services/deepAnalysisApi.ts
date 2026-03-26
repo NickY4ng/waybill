@@ -10,8 +10,7 @@ const DEEP_ANALYSIS_SESSION_KEY = 'deep_analysis_session_id';
 const DEEP_ANALYSIS_MESSAGE_COUNT_KEY = 'deep_analysis_message_count';
 const MAX_MESSAGE_COUNT = 30;
 
-// 【深度分析系统提示词 - 融合版V3.0】
-const DEEP_ANALYSIS_SYSTEM_PROMPT = ``;
+
 
 interface BailianRequest {
   input: {
@@ -95,18 +94,13 @@ export async function callDeepAnalysisAgent(prompt: string): Promise<string> {
       messageCount = 0;
     }
 
-    // 【优化：只有新会话（无sessionId）时才发送系统提示词】
-    // 有sessionId说明是继续对话，只需发送用户问题，上下文会自动保持
-    const fullPrompt = sessionId
-      ? prompt  // 继续对话，只发送用户问题
-      : `${DEEP_ANALYSIS_SYSTEM_PROMPT}\n\n=== 用户问题 ===\n${prompt}`;  // 新会话，发送系统提示词+用户问题
+    // 直接传递用户问题，不添加任何前缀或系统提示词
+    const fullPrompt = prompt;
 
     // 【调试日志】
     console.log('[深度分析API] sessionId:', sessionId);
     console.log('[深度分析API] 是否新会话:', !sessionId);
-    console.log('[深度分析API] 系统提示词长度:', DEEP_ANALYSIS_SYSTEM_PROMPT.length);
-    console.log('[深度分析API] 完整prompt长度:', fullPrompt.length);
-    console.log('[深度分析API] 完整prompt前200字符:', fullPrompt.substring(0, 200));
+    console.log('[深度分析API] 完整prompt:', fullPrompt);
 
     const requestBody: BailianRequest = {
       input: {
