@@ -311,7 +311,7 @@ export function SmartQueryAgent() {
         {
           id: 'welcome',
           type: 'bot',
-          content: '您好！我是大卡鹰眼智能报表助手。我可以帮您快速查询数据，也可以进行多维度深度分析。请告诉我您的需求？',
+          content: '您好！我是大卡鹰眼智能报表专家。我可以帮您快速查询数据、行业咨询和多维度深度分析数据。请告诉我您的需求？',
           timestamp: new Date(),
         },
       ],
@@ -532,7 +532,7 @@ export function SmartQueryAgent() {
         {
           id: 'welcome',
           type: 'bot',
-          content: '您好！我是大卡鹰眼智能报表助手。我可以帮您快速查询数据，也可以进行多维度深度分析。请告诉我您的需求？',
+          content: '您好！我是大卡鹰眼智能报表专家。我可以帮您快速查询数据、行业咨询和多维度深度分析数据。请告诉我您的需求？',
           timestamp: new Date(),
         },
       ],
@@ -541,7 +541,7 @@ export function SmartQueryAgent() {
     };
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
-    setAnalysisMode('quick');
+    setAnalysisMode('deep');
     setSelectedTemplate(null);
     setUploadedFile(null);
     setSelectedHtmlReport(null);
@@ -562,21 +562,21 @@ export function SmartQueryAgent() {
             {
               id: 'welcome',
               type: 'bot',
-              content: '您好！我是大卡鹰眼智能报表助手。我可以帮您快速查询数据，也可以进行多维度深度分析。请告诉我您的需求？',
-              timestamp: new Date(),
-            },
-          ],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        setCurrentSessionId(newSession.id);
-        return [newSession];
-      }
-      if (currentSessionId === sessionId) {
-        setCurrentSessionId(newSessions[0].id);
-      }
-      return newSessions;
-    });
+              content: '您好！我是大卡鹰眼智能报表专家。我可以帮您快速查询数据、行业咨询和多维度深度分析数据。请告诉我您的需求？',
+          timestamp: new Date(),
+        },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    setCurrentSessionId(newSession.id);
+    return [newSession];
+  }
+  if (currentSessionId === sessionId) {
+    setCurrentSessionId(newSessions[0].id);
+  }
+  return newSessions;
+});
   };
 
   // 处理文件上传
@@ -615,41 +615,35 @@ export function SmartQueryAgent() {
     setInput('');
     setIsLoading(true);
 
-    // 如果是深度分析模式
-    if (analysisMode === 'deep') {
-      setShowRightPanel(true);
-      setActiveRightTab('engine');
-      
-      // 创建任务记录
-      const taskId = Date.now().toString();
-      setCurrentTaskId(taskId);
-      const newTask: DeepAnalysisTask = {
-        id: taskId,
-        sessionId: currentSessionId,
-        messageId: '',
-        status: 'running',
-        startTime: new Date(),
-      };
-      setDeepAnalysisTasks(prev => [...prev, newTask]);
+    // 统一使用深度分析模式
+    setShowRightPanel(true);
+    setActiveRightTab('engine');
+    
+    // 创建任务记录
+    const taskId = Date.now().toString();
+    setCurrentTaskId(taskId);
+    const newTask: DeepAnalysisTask = {
+      id: taskId,
+      sessionId: currentSessionId,
+      messageId: '',
+      status: 'running',
+      startTime: new Date(),
+    };
+    setDeepAnalysisTasks(prev => [...prev, newTask]);
 
-      // 根据当前阶段启动不同的专家
-      if (analysisPhase === 'requirement') {
-        startRequirementPhase();
-      } else {
-        startAnalysisPhase();
-      }
+    // 根据当前阶段启动不同的专家
+    if (analysisPhase === 'requirement') {
+      startRequirementPhase();
+    } else {
+      startAnalysisPhase();
     }
 
     try {
-      let aiResponse: string;
-
       // 构建完整提示词
       let fullPrompt = input;
       
-      // 深度分析模式下，添加深度分析指令前缀
-      if (analysisMode === 'deep') {
-        fullPrompt = `【深度分析需求】${input}`;
-      }
+      // 添加深度分析指令前缀
+      fullPrompt = `【深度分析需求】${input}`;
       
       // 如果选择了模板，添加模板提示词
       if (selectedTemplate) {
@@ -661,99 +655,55 @@ export function SmartQueryAgent() {
         fullPrompt += `\n\n【用户上传文件：${uploadedFile.name}】`;
       }
 
-      if (analysisMode === 'deep') {
-        // 深度分析模式
-        aiResponse = await callDeepAnalysisAgent(fullPrompt);
-        incrementServiceCount();
+      // 统一调用深度分析接口
+      const aiResponse = await callDeepAnalysisAgent(fullPrompt);
+      incrementServiceCount();
 
-        // 检查是否是"需求已理解"确认消息
-        const isRequirementUnderstood = aiResponse.includes('需求已理解') &&
-                                        aiResponse.includes('正在为您生成深度分析报告');
+      // 检查是否是"需求已理解"确认消息
+      const isRequirementUnderstood = aiResponse.includes('需求已理解') &&
+                                      aiResponse.includes('正在为您生成深度分析报告');
 
-        if (isRequirementUnderstood) {
-          // 先显示"需求已理解"消息
-          const confirmResponse: Message = {
-            id: Date.now().toString(),
-            type: 'bot',
-            content: aiResponse,
-            timestamp: new Date(),
-            isHtml: false,
-            isDeepAnalysis: true,
-          };
-
-          setSessions(prev => prev.map(session => {
-            if (session.id === currentSessionId) {
-              return {
-                ...session,
-                messages: [...session.messages, confirmResponse],
-                updatedAt: new Date(),
-              };
-            }
-            return session;
-          }));
-
-          // 需求确认完成，切换到分析阶段
-          setRequirementExpert(prev => ({ ...prev, status: 'completed', progress: 100, currentTask: '需求确认完成' }));
-          
-          // 等待一小段时间
-          await new Promise(resolve => setTimeout(resolve, 800));
-
-          // 启动分析阶段
-          startAnalysisPhase();
-
-          // 自动触发第二次调用，生成HTML报告
-          const htmlReportResponse = await callDeepAnalysisAgent('【系统触发】请基于已确认的分析范围，生成完整的HTML深度分析报告。');
-          incrementServiceCount();
-
-          const isHtmlContent = isHtmlReport(htmlReportResponse);
-          const htmlMessageId = Date.now().toString();
-          const htmlBotResponse: Message = {
-            id: htmlMessageId,
-            type: 'bot',
-            content: htmlReportResponse,
-            timestamp: new Date(),
-            isHtml: isHtmlContent,
-            isDeepAnalysis: true,
-          };
-
-          setSessions(prev => prev.map(session => {
-            if (session.id === currentSessionId) {
-              return {
-                ...session,
-                messages: [...session.messages, htmlBotResponse],
-                updatedAt: new Date(),
-              };
-            }
-            return session;
-          }));
-
-          // 报告生成后，完成分析
-          completeAnalysis();
-
-          // 自动选中这个报告在右侧展示
-          if (isHtmlContent) {
-            setSelectedHtmlReport({ content: htmlReportResponse, messageId: htmlMessageId });
-            setActiveRightTab('preview');
-            setIsSidebarCollapsed(true);
-          }
-
-          // 更新任务状态为完成
-          setDeepAnalysisTasks(prev => prev.map(task =>
-            task.id === currentTaskId
-              ? { ...task, status: 'completed', endTime: new Date(), messageId: htmlMessageId }
-              : task
-          ));
-
-          setIsLoading(false);
-          return;
-        }
-
-        // 如果不是确认消息（可能是确认问题或引导话术）
-        const isHtmlContent = isHtmlReport(aiResponse);
-        const botResponse: Message = {
+      if (isRequirementUnderstood) {
+        // 先显示"需求已理解"消息
+        const confirmResponse: Message = {
           id: Date.now().toString(),
           type: 'bot',
           content: aiResponse,
+          timestamp: new Date(),
+          isHtml: false,
+          isDeepAnalysis: true,
+        };
+
+        setSessions(prev => prev.map(session => {
+          if (session.id === currentSessionId) {
+            return {
+              ...session,
+              messages: [...session.messages, confirmResponse],
+              updatedAt: new Date(),
+            };
+          }
+          return session;
+        }));
+
+        // 需求确认完成，切换到分析阶段
+        setRequirementExpert(prev => ({ ...prev, status: 'completed', progress: 100, currentTask: '需求确认完成' }));
+        
+        // 等待一小段时间
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // 启动分析阶段
+        startAnalysisPhase();
+
+        // 自动触发第二次调用，生成HTML报告
+        const htmlReportResponse = await callDeepAnalysisAgent('【系统触发】请基于已确认的分析范围，生成完整的HTML深度分析报告。');
+        incrementServiceCount();
+
+        const isHtmlContent = isHtmlReport(htmlReportResponse);
+        const htmlMessageId = Date.now().toString();
+        const htmlBotResponse: Message = {
+          id: htmlMessageId,
+          type: 'bot',
+          content: htmlReportResponse,
           timestamp: new Date(),
           isHtml: isHtmlContent,
           isDeepAnalysis: true,
@@ -763,104 +713,71 @@ export function SmartQueryAgent() {
           if (session.id === currentSessionId) {
             return {
               ...session,
-              messages: [...session.messages, botResponse],
+              messages: [...session.messages, htmlBotResponse],
               updatedAt: new Date(),
             };
           }
           return session;
         }));
 
-        // 进入等待用户确认状态
-        setAnalysisPhase('requirement_waiting');
-        setRequirementExpert(prev => ({ 
-          ...prev, 
-          status: 'completed', 
-          progress: 100, 
-          currentTask: '等待用户确认分析范围' 
-        }));
+        // 报告生成后，完成分析
+        completeAnalysis();
 
-        // 停止查询状态
-        stopQueryStatus();
+        // 自动选中这个报告在右侧展示
+        if (isHtmlContent) {
+          setSelectedHtmlReport({ content: htmlReportResponse, messageId: htmlMessageId });
+          setActiveRightTab('preview');
+          setIsSidebarCollapsed(true);
+        }
+
+        // 更新任务状态为完成
+        setDeepAnalysisTasks(prev => prev.map(task =>
+          task.id === currentTaskId
+            ? { ...task, status: 'completed', endTime: new Date(), messageId: htmlMessageId }
+            : task
+        ));
 
         setIsLoading(false);
         return;
-
-      } else {
-        // 快速问数模式
-        aiResponse = await callBailianAgent(fullPrompt);
-        incrementServiceCount();
-
-        // 检查是否是确认消息（快速问数的两步流程）
-        const isConfirmMessage = aiResponse.includes('需求已理解') && aiResponse.includes('正在为您查询');
-
-        if (isConfirmMessage) {
-          const confirmResponse: Message = {
-            id: Date.now().toString(),
-            type: 'bot',
-            content: aiResponse,
-            timestamp: new Date(),
-            isHtml: false,
-          };
-
-          setSessions(prev => prev.map(session => {
-            if (session.id === currentSessionId) {
-              return {
-                ...session,
-                messages: [...session.messages, confirmResponse],
-                updatedAt: new Date(),
-              };
-            }
-            return session;
-          }));
-
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          const queryResponse = await executeBailianQuery();
-          incrementServiceCount();
-
-          const botResponse: Message = {
-            id: Date.now().toString(),
-            type: 'bot',
-            content: queryResponse,
-            timestamp: new Date(),
-            isHtml: false,
-          };
-
-          setSessions(prev => prev.map(session => {
-            if (session.id === currentSessionId) {
-              return {
-                ...session,
-                messages: [...session.messages, botResponse],
-                updatedAt: new Date(),
-              };
-            }
-            return session;
-          }));
-
-          setIsLoading(false);
-          return;
-        }
-
-        // 普通回复
-        const botResponse: Message = {
-          id: Date.now().toString(),
-          type: 'bot',
-          content: aiResponse,
-          timestamp: new Date(),
-          isHtml: false,
-        };
-
-        setSessions(prev => prev.map(session => {
-          if (session.id === currentSessionId) {
-            return {
-              ...session,
-              messages: [...session.messages, botResponse],
-              updatedAt: new Date(),
-            };
-          }
-          return session;
-        }));
       }
+
+      // 如果不是确认消息（可能是确认问题或引导话术）
+      const isHtmlContent = isHtmlReport(aiResponse);
+      const botResponse: Message = {
+        id: Date.now().toString(),
+        type: 'bot',
+        content: aiResponse,
+        timestamp: new Date(),
+        isHtml: isHtmlContent,
+        isDeepAnalysis: true,
+      };
+
+      setSessions(prev => prev.map(session => {
+        if (session.id === currentSessionId) {
+          return {
+            ...session,
+            messages: [...session.messages, botResponse],
+            updatedAt: new Date(),
+          };
+        }
+        return session;
+      }));
+
+      // 进入等待用户确认状态
+      setAnalysisPhase('requirement_waiting');
+      setRequirementExpert(prev => ({ 
+        ...prev, 
+        status: 'completed', 
+        progress: 100, 
+        currentTask: '等待用户确认分析范围' 
+      }));
+
+      // 停止查询状态
+      stopQueryStatus();
+
+      setIsLoading(false);
+      return;
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '请求失败，请稍后重试';
       const botResponse: Message = {
@@ -1344,7 +1261,7 @@ export function SmartQueryAgent() {
             >
               {isSidebarCollapsed ? '→' : '←'}
             </button>
-            <span className="text-sm font-medium text-slate-700">智能报表助手</span>
+            <span className="text-sm font-medium text-slate-700">智能报表专家</span>
           </div>
 
 
@@ -1474,35 +1391,25 @@ export function SmartQueryAgent() {
         {/* 输入区域 */}
         <div className="border-t border-slate-100 bg-white p-4 shrink-0">
           <div className="max-w-4xl mx-auto space-y-3">
-            {/* 分析模式选择栏 */}
-            <div className="flex items-center gap-4 flex-wrap">
-              {/* 模式下拉选择框 */}
-              <ModeSelector 
-                currentMode={analysisMode} 
-                onModeChange={handleModeChange}
-              />
+            {/* 模板选择和文件上传栏 */}
+            <div className="flex items-center gap-3">
+              {/* 模板选择按钮 */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowTemplateDialog(true)}
+                className="h-8 text-xs border-purple-200 text-purple-600 hover:bg-purple-50"
+              >
+                {selectedTemplate ? `已选择：${selectedTemplate.name}` : '选择模板'}
+              </Button>
 
-
-              {analysisMode === 'deep' && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowTemplateDialog(true)}
-                    className="h-7 text-xs border-purple-200 text-purple-600 hover:bg-purple-50"
-                  >
-                    {selectedTemplate ? `已选择：${selectedTemplate.name}` : '选择模板'}
-                  </Button>
-
-                  {selectedTemplate && (
-                    <button
-                      onClick={handleClearTemplate}
-                      className="text-xs text-slate-400 hover:text-slate-600"
-                    >
-                      取消模板
-                    </button>
-                  )}
-                </>
+              {selectedTemplate && (
+                <button
+                  onClick={handleClearTemplate}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
+                  取消模板
+                </button>
               )}
 
               {/* 文件上传 */}
@@ -1518,7 +1425,7 @@ export function SmartQueryAgent() {
                   size="sm"
                   variant="ghost"
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-7 text-xs text-slate-500 hover:text-blue-600"
+                  className="h-8 text-xs text-slate-500 hover:text-blue-600"
                 >
                   <Upload className="w-3.5 h-3.5 mr-1" />
                   {uploadedFile ? uploadedFile.name : '上传文件'}
@@ -1543,7 +1450,7 @@ export function SmartQueryAgent() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder={analysisMode === 'deep' ? '描述您的深度分析需求，如：分析北京到河北的货物流向特征...' : '输入您的问题，如：查询2024年10月山西到河北的煤炭运输量...'}
+                placeholder='描述您的分析需求，如：分析北京到河北的货物流向特征，或查询2024年10月山西到河北的煤炭运输量...'
                 className="flex-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400/20"
                 disabled={isLoading}
               />
