@@ -192,10 +192,9 @@ const ANALYSIS_STATUSES: QueryStatus[] = [
 
 // 示例问题
 const EXAMPLE_QUERIES = [
-  '查询2024年10月从山西到河北的煤炭运输量',
-  '分析一下北京生产制造企业到河北的货物流向',
-  '对比G15沈海高速和G2京沪高速的货车流量',
-  '深度分析山西省煤炭运输的供应链网络',
+  '分析一下全国货物流向',
+  '给我输出一个物流时效的分析方案',
+  '统计一下25年全年运单数',
 ];
 
 // 生成会话标题
@@ -1393,14 +1392,15 @@ export function SmartQueryAgent() {
           <div className="max-w-4xl mx-auto space-y-3">
             {/* 模板选择和文件上传栏 */}
             <div className="flex items-center gap-3">
-              {/* 模板选择按钮 */}
+              {/* 深度分析模板标签和选择按钮 */}
+              <span className="text-sm text-slate-600">深度分析模板：</span>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setShowTemplateDialog(true)}
                 className="h-8 text-xs border-purple-200 text-purple-600 hover:bg-purple-50"
               >
-                {selectedTemplate ? `已选择：${selectedTemplate.name}` : '选择模板'}
+                {selectedTemplate ? selectedTemplate.name : '选择模板'}
               </Button>
 
               {selectedTemplate && (
