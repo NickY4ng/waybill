@@ -4,7 +4,47 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Key, Settings, Trash2 } from 'lucide-react';
+import { Search, Plus, Key, Settings, Trash2, CheckCircle, XCircle } from 'lucide-react';
+
+// SQL验证函数
+function validateSql(sql: string): { valid: boolean; message: string } {
+  if (!sql || sql.trim() === '') {
+    return { valid: true, message: '使用默认权限' };
+  }
+
+  const trimmedSql = sql.trim().toUpperCase();
+
+  // 检查是否以SELECT开头
+  if (!trimmedSql.startsWith('SELECT')) {
+    return { valid: false, message: 'SQL必须以SELECT开头' };
+  }
+
+  // 检查是否包含危险操作
+  const dangerousKeywords = ['DELETE', 'DROP', 'TRUNCATE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE'];
+  for (const keyword of dangerousKeywords) {
+    if (trimmedSql.includes(keyword)) {
+      return { valid: false, message: `SQL不能包含${keyword}操作` };
+    }
+  }
+
+  // 检查基本语法
+  if (!trimmedSql.includes('FROM')) {
+    return { valid: false, message: 'SQL缺少FROM关键字' };
+  }
+
+  // 检查引号是否成对
+  const singleQuotes = (sql.match(/'/g) || []).length;
+  if (singleQuotes % 2 !== 0) {
+    return { valid: false, message: '单引号未闭合' };
+  }
+
+  const doubleQuotes = (sql.match(/"/g) || []).length;
+  if (doubleQuotes % 2 !== 0) {
+    return { valid: false, message: '双引号未闭合' };
+  }
+
+  return { valid: true, message: 'SQL格式正确' };
+}
 
 interface Account {
   id: string;
@@ -52,7 +92,14 @@ export function AccountManagement() {
       alert('请填写完整信息');
       return;
     }
-    
+
+    // 验证SQL
+    const sqlValidation = validateSql(newAccount.permissionSql);
+    if (!sqlValidation.valid) {
+      alert(`SQL验证失败：${sqlValidation.message}`);
+      return;
+    }
+
     const account: Account = {
       id: Date.now().toString(),
       customerId: newAccount.customerId,
@@ -61,7 +108,7 @@ export function AccountManagement() {
       permissionSql: newAccount.permissionSql || 'SELECT * FROM waybill_data',
       createdAt: new Date().toISOString().split('T')[0],
     };
-    
+
     setAccounts([...accounts, account]);
     setNewAccount({ customerId: '', customerName: '', accountName: '', password: '', permissionSql: '' });
     setIsCreateDialogOpen(false);
@@ -77,7 +124,14 @@ export function AccountManagement() {
 
   const handleUpdatePermissions = () => {
     if (!selectedAccount) return;
-    
+
+    // 验证SQL
+    const sqlValidation = validateSql(permissionSqlInput);
+    if (!sqlValidation.valid) {
+      alert(`SQL验证失败：${sqlValidation.message}`);
+      return;
+    }
+
     setAccounts(accounts.map(acc =>
       acc.id === selectedAccount.id ? { ...acc, permissionSql: permissionSqlInput } : acc
     ));
@@ -183,7 +237,7 @@ export function AccountManagement() {
 
       {/* 新建账号对话框 */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>新建账号</DialogTitle>
           </DialogHeader>
@@ -220,6 +274,39 @@ export function AccountManagement() {
                 value={newAccount.password}
                 onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">权限SQL配置</label>
+              <textarea
+                placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
+                value={newAccount.permissionSql}
+                onChange={(e) => setNewAccount({ ...newAccount, permissionSql: e.target.value })}
+                className={`w-full h-32 p-3 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 ${
+                  newAccount.permissionSql && !validateSql(newAccount.permissionSql).valid
+                    ? 'border-red-300 bg-red-50'
+                    : newAccount.permissionSql && validateSql(newAccount.permissionSql).valid
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-slate-200'
+                }`}
+              />
+              {newAccount.permissionSql && (
+                <div className={`flex items-center gap-1 text-xs ${
+                  validateSql(newAccount.permissionSql).valid ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {validateSql(newAccount.permissionSql).valid ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      <span>{validateSql(newAccount.permissionSql).message}</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-3 h-3" />
+                      <span>{validateSql(newAccount.permissionSql).message}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <p className="text-xs text-slate-400">输入SQL查询语句来定义该账号的数据访问权限</p>
             </div>
           </div>
           <DialogFooter>
@@ -262,8 +349,31 @@ export function AccountManagement() {
               value={permissionSqlInput}
               onChange={(e) => setPermissionSqlInput(e.target.value)}
               placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
-              className="w-full h-40 p-3 border border-slate-200 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+              className={`w-full h-40 p-3 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 ${
+                permissionSqlInput && !validateSql(permissionSqlInput).valid
+                  ? 'border-red-300 bg-red-50'
+                  : permissionSqlInput && validateSql(permissionSqlInput).valid
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-slate-200'
+              }`}
             />
+            {permissionSqlInput && (
+              <div className={`flex items-center gap-1 text-xs ${
+                validateSql(permissionSqlInput).valid ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {validateSql(permissionSqlInput).valid ? (
+                  <>
+                    <CheckCircle className="w-3 h-3" />
+                    <span>{validateSql(permissionSqlInput).message}</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-3 h-3" />
+                    <span>{validateSql(permissionSqlInput).message}</span>
+                  </>
+                )}
+              </div>
+            )}
             <div className="text-xs text-slate-400">
               提示：SQL语句将用于过滤该账号可查看的数据范围
             </div>
