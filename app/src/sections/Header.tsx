@@ -1,6 +1,7 @@
-import { Brain, Database, Settings, User, BarChart3, Newspaper, Shield } from 'lucide-react';
+import { Brain, Database, Settings, User, BarChart3, Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   activeModule: string;
@@ -43,7 +44,6 @@ export function Header({ activeModule, onModuleChange }: HeaderProps) {
   const modules = [
     { id: 'query', name: '智能报表', icon: Brain },
     { id: 'data-assets', name: '数据资产', icon: Database },
-    { id: 'industry-monitor', name: '行业动态监控', icon: Newspaper },
   ];
 
   return (
@@ -55,7 +55,7 @@ export function Header({ activeModule, onModuleChange }: HeaderProps) {
         </div>
         <div>
           <h1 className="text-xl font-bold gradient-text">大卡鹰眼</h1>
-          <p className="text-xs text-slate-500 font-medium">智能数据决策平台</p>
+          <p className="text-xs text-slate-500 font-medium">物流决策分析智能体</p>
         </div>
       </div>
 
@@ -115,13 +115,27 @@ export function Header({ activeModule, onModuleChange }: HeaderProps) {
         >
           <Settings className="w-5 h-5" />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
-        >
-          <User className="w-5 h-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
+            >
+              <User className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => {
+              localStorage.removeItem('admin_token');
+              localStorage.removeItem('admin_user');
+              window.location.reload();
+            }} className="flex items-center gap-2">
+              <LogOut className="w-4 h-4" />
+              <span>退出账号</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

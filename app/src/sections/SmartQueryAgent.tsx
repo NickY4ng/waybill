@@ -4,6 +4,67 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { clearBailianSession } from '@/services/bailianApi';
+
+// 鼠标跟随Tooltip组件
+interface MouseFollowTooltipProps {
+  children: React.ReactNode;
+  content: string;
+}
+
+function MouseFollowTooltip({ children, content }: MouseFollowTooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      // 计算相对于容器的位置，让浮窗紧贴鼠标
+      setPosition({ 
+        x: e.clientX - rect.left + 10, 
+        y: e.clientY - rect.top + 10 
+      });
+    }
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setPosition({ 
+        x: e.clientX - rect.left + 10, 
+        y: e.clientY - rect.top + 10 
+      });
+    }
+    setIsVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsVisible(false);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="relative"
+    >
+      {children}
+      {isVisible && (
+        <div
+          className="absolute z-[9999] w-80 bg-white border border-slate-200 rounded-lg shadow-lg pointer-events-none"
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+          }}
+        >
+          <div dangerouslySetInnerHTML={{ __html: content }} />
+        </div>
+      )}
+    </div>
+  );
+}
 import { callDeepAnalysisAgent, downloadHtmlReport, isHtmlReport, clearDeepAnalysisSession } from '@/services/deepAnalysisApi';
 import { incrementServiceCount } from '@/sections/Header';
 import ReactMarkdown from 'react-markdown';
@@ -41,15 +102,6 @@ interface DeepAnalysisTask {
   endTime?: Date;
 }
 
-// 分析模板类型
-interface AnalysisTemplate {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  description: string;
-  prompt: string;
-}
-
 // 专家类型
 interface Expert {
   id: string;
@@ -73,6 +125,16 @@ interface QueryStatus {
 // 分析阶段类型
 type AnalysisPhase = 'requirement' | 'requirement_waiting' | 'analysis' | 'summarizing' | 'completed';
 
+// 分析模板类型
+interface AnalysisTemplate {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  description: string;
+  prompt: string;
+  hoverContent: string;
+}
+
 // 分析模板列表
 const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
   {
@@ -81,6 +143,23 @@ const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
     icon: <MapPin className="w-5 h-5" />,
     description: '分析区域间货物流动特征、热门线路、流向分布',
     prompt: '请对以下问题进行货物流向深度分析，重点关注：1）主要流向分布 2）热门运输线路 3）区域间货物流动特征 4）货类构成分析',
+    hoverContent: `
+      <div class="p-3 text-xs">
+        <h4 class="font-semibold mb-1.5 text-sm">分析目的：</h4>
+        <p class="mb-2.5 text-slate-600">提供标准化的货物流向分析框架，基于虚拟运单数据从8个维度全面理解货物运输特征，支持区域规划、货类洞察、运力优化等决策需求。</p>
+        <h4 class="font-semibold mb-1.5 text-sm">8个分析维度：</h4>
+        <ul class="list-disc pl-4 space-y-0.5 text-slate-600">
+          <li>区域流向维度 - 分析货物从出发地到目的地的流动特征</li>
+          <li>货类流向维度 - 分析不同货类的特定流向特征</li>
+          <li>POI类型维度 - 按场站POI类型分析流向</li>
+          <li>时间趋势维度 - 分析月度、季度、年度货物流向变化，识别季节性波动和长期趋势</li>
+          <li>流向集中度维度 - 统计热门线路占比，评估货物流向集中或分散程度</li>
+          <li>距离分布维度 - 按运输距离区间分析特征</li>
+          <li>线路维度 - 分析线路分布及特征</li>
+          <li>车辆属性维度 - 分析参与运输车辆的静态基本信息</li>
+        </ul>
+      </div>
+    `
   },
   {
     id: 'supplychain',
@@ -88,20 +167,23 @@ const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
     icon: <Users className="w-5 h-5" />,
     description: '分析企业供应链关系、合作伙伴、网络密度',
     prompt: '请对以下问题进行供应链深度分析，重点关注：1）企业上下游关系 2）合作伙伴分析 3）供应链网络密度 4）关键节点识别',
-  },
-  {
-    id: 'location',
-    name: '选址分析',
-    icon: <BarChart3 className="w-5 h-5" />,
-    description: '分析物流节点选址合理性、覆盖范围、成本效益',
-    prompt: '请对以下问题进行选址深度分析，重点关注：1）节点覆盖范围 2）运输成本效益 3）地理位置优势 4）辐射能力评估',
-  },
-  {
-    id: 'trend',
-    name: '趋势对比分析',
-    icon: <TrendingUp className="w-5 h-5" />,
-    description: '分析时间段对比变化、趋势预测、环比分析',
-    prompt: '请对以下问题进行趋势深度分析，重点关注：1）时间序列变化 2）环比对比分析 3）趋势预测 4）季节性特征',
+    hoverContent: `
+      <div class="p-3 text-xs">
+        <h4 class="font-semibold mb-1.5 text-sm">分析目的：</h4>
+        <p class="mb-2.5 text-slate-600">提供8个标准化分析维度，支撑企业上下游分析、供应链溯源、行业洞察等关键需求，帮助客户快速理解供应链网络结构、货物流向、关键节点、效率成本及趋势风险。</p>
+        <h4 class="font-semibold mb-1.5 text-sm">8个分析维度：</h4>
+        <ul class="list-disc pl-4 space-y-0.5 text-slate-600">
+          <li>企业流量维度 - 量化企业物流活动规模，识别核心物流节点</li>
+          <li>供应链溯源维度 - 追溯货物来源和去向，构建供应链网络</li>
+          <li>行业特征维度 - 分析不同行业的供应链特征和差异</li>
+          <li>龙头识别维度 - 识别行业内的关键企业和市场领导者</li>
+          <li>距离集中度维度 - 量化供应链的空间效率和市场结构</li>
+          <li>装卸效率维度 - 评估供应链节点的操作效率</li>
+          <li>成本效益维度 - 量化供应链的运输成本和效益</li>
+          <li>趋势预测维度 - 分析供应链的时间动态和未来趋势</li>
+        </ul>
+      </div>
+    `
   },
 ];
 
@@ -1492,21 +1574,22 @@ export function SmartQueryAgent() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 mt-4">
             {ANALYSIS_TEMPLATES.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => handleSelectTemplate(template)}
-                className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-left group"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
-                    {template.icon}
+              <MouseFollowTooltip key={template.id} content={template.hoverContent}>
+                <button
+                  onClick={() => handleSelectTemplate(template)}
+                  className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-left group w-full"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                      {template.icon}
+                    </div>
+                    <span className="font-medium text-slate-700 group-hover:text-purple-700">
+                      {template.name}
+                    </span>
                   </div>
-                  <span className="font-medium text-slate-700 group-hover:text-purple-700">
-                    {template.name}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">{template.description}</p>
-              </button>
+                  <p className="text-xs text-slate-500">{template.description}</p>
+                </button>
+              </MouseFollowTooltip>
             ))}
           </div>
         </DialogContent>

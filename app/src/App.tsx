@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Header } from './sections/Header';
 import { SmartQueryAgent } from './sections/SmartQueryAgent';
 import { DataAssets } from './sections/DataAssets';
-import { DigitalHuman } from './sections/DigitalHuman';
 import { AdminPanel } from './sections/Admin';
 import { Toaster } from '@/components/ui/sonner';
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
@@ -31,11 +30,7 @@ function App() {
           </div>
         )}
         
-        {activeModule === 'industry-monitor' && (
-          <div className="h-full w-full overflow-hidden">
-            <DigitalHuman />
-          </div>
-        )}
+
         
         {activeModule === 'data-assets' && (
           <div className="h-full w-full overflow-hidden">

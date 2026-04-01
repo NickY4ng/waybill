@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, TrendingUp, MapPin, Loader2, RefreshCw, Search, Sparkles, ArrowDown, Send } from 'lucide-react';
+import { Building2, TrendingUp, Loader2, RefreshCw, Search, Sparkles, ArrowDown, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import * as echarts from 'echarts';
 
 if (typeof window !== 'undefined') {
@@ -12,7 +13,6 @@ if (typeof window !== 'undefined') {
 }
 
 import { generateCargoFlowAnalysis, clearCache as clearCargoFlowCache } from '@/services/cargoFlowApi';
-import { generateLoadingEfficiencyAnalysis, clearCache as clearLoadingEfficiencyCache } from '@/services/loadingEfficiencyApi';
 import { generateEnterpriseAnalysis, clearCache as clearEnterpriseCache } from '@/services/enterpriseApi';
 
 function IframeHtmlRenderer({ html, title }: { html: string; title: string }) {
@@ -74,16 +74,45 @@ const ANALYSIS_CONFIG = {
     title: '企业上下游分析',
     description: '深度解析企业供应链关系，识别核心供应商与下游客户，优化供应链布局',
     icon: Building2,
+    hoverContent: `
+      <div className="p-4">
+        <h4 className="font-semibold mb-2">分析目的：</h4>
+        <p className="text-sm mb-3">提供8个标准化分析维度，支撑企业上下游分析、供应链溯源、行业洞察等关键需求，帮助客户快速理解供应链网络结构、货物流向、关键节点、效率成本及趋势风险。</p>
+        <h4 className="font-semibold mb-2">8个分析维度：</h4>
+        <ul className="text-sm list-disc pl-5 space-y-1">
+          <li>企业流量维度 - 量化企业物流活动规模，识别核心物流节点</li>
+          <li>供应链溯源维度 - 追溯货物来源和去向，构建供应链网络</li>
+          <li>行业特征维度 - 分析不同行业的供应链特征和差异</li>
+          <li>龙头识别维度 - 识别行业内的关键企业和市场领导者</li>
+          <li>距离集中度维度 - 量化供应链的空间效率和市场结构</li>
+          <li>装卸效率维度 - 评估供应链节点的操作效率</li>
+          <li>成本效益维度 - 量化供应链的运输成本和效益</li>
+          <li>趋势预测维度 - 分析供应链的时间动态和未来趋势</li>
+        </ul>
+      </div>
+    `
   },
   cargo: {
     title: '货物流向分析',
     description: '全景展示区域间货物流动趋势，挖掘物流热点线路与流向特征',
     icon: TrendingUp,
-  },
-  location: {
-    title: '装卸货效率分析',
-    description: '评估各区域装卸货效率，识别瓶颈环节，提升物流运营效率',
-    icon: MapPin,
+    hoverContent: `
+      <div className="p-4">
+        <h4 className="font-semibold mb-2">分析目的：</h4>
+        <p className="text-sm mb-3">提供标准化的货物流向分析框架，从8个维度全面理解货物运输特征。</p>
+        <h4 className="font-semibold mb-2">8个分析维度：</h4>
+        <ul className="text-sm list-disc pl-5 space-y-1">
+          <li>区域流向维度 - 分析货物从出发地到目的地的流动特征</li>
+          <li>货类流向维度 - 分析不同货类的特定流向特征（17大类货类）</li>
+          <li>POI类型维度 - 按场站POI类型分析流向（中转场站、终端市场等）</li>
+          <li>时间趋势维度 - 分析月度、季度、年度货物流向变化</li>
+          <li>流向集中度维度 - 统计热门线路占比，评估流向集中度</li>
+          <li>距离分布维度 - 按运输距离区间分析特征（短途/中途/长途）</li>
+          <li>线路维度 - 分析线路分布及特征</li>
+          <li>车辆属性维度 - 分析参与运输车辆的静态基本信息</li>
+        </ul>
+      </div>
+    `
   },
 };
 
@@ -93,10 +122,6 @@ export function SmartAnalysisAgent() {
   const [cargoFlowHtml, setCargoFlowHtml] = useState<string>('');
   const [cargoFlowLoading, setCargoFlowLoading] = useState<boolean>(false);
   const [cargoFlowError, setCargoFlowError] = useState<string>('');
-
-  const [loadingEfficiencyHtml, setLoadingEfficiencyHtml] = useState<string>('');
-  const [loadingEfficiencyLoading, setLoadingEfficiencyLoading] = useState<boolean>(false);
-  const [loadingEfficiencyError, setLoadingEfficiencyError] = useState<string>('');
 
   const [enterpriseHtml, setEnterpriseHtml] = useState<string>('');
   const [enterpriseLoading, setEnterpriseLoading] = useState<boolean>(false);
@@ -148,26 +173,7 @@ export function SmartAnalysisAgent() {
     loadCargoFlowAnalysis();
   };
 
-  const loadLoadingEfficiencyAnalysis = async () => {
-    setLoadingEfficiencyLoading(true);
-    setLoadingEfficiencyError('');
-    try {
-      const html = await generateLoadingEfficiencyAnalysis();
-      setLoadingEfficiencyHtml(html);
-    } catch (error) {
-      console.error('加载装卸货效率分析失败:', error);
-      setLoadingEfficiencyError('加载失败，请重试');
-      toast.error('装卸货效率分析加载失败');
-    } finally {
-      setLoadingEfficiencyLoading(false);
-    }
-  };
 
-  const refreshLoadingEfficiencyAnalysis = () => {
-    clearLoadingEfficiencyCache();
-    setLoadingEfficiencyHtml('');
-    loadLoadingEfficiencyAnalysis();
-  };
 
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
@@ -258,27 +264,25 @@ export function SmartAnalysisAgent() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center justify-between mb-4">
             <TabsList className="bg-white border border-slate-200 p-1 rounded-xl">
-              <TabsTrigger 
-                value="enterprise" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg px-4 py-2"
-              >
-                <Building2 className="w-4 h-4 mr-1" />
-                企业上下游分析
-              </TabsTrigger>
-              <TabsTrigger 
-                value="cargo" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg px-4 py-2"
-              >
-                <TrendingUp className="w-4 h-4 mr-1" />
-                货物流向分析
-              </TabsTrigger>
-              <TabsTrigger 
-                value="location" 
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg px-4 py-2"
-              >
-                <MapPin className="w-4 h-4 mr-1" />
-                装卸货效率分析
-              </TabsTrigger>
+              {Object.entries(ANALYSIS_CONFIG).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <HoverCard key={key} openDelay={100} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <TabsTrigger 
+                        value={key} 
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg px-4 py-2"
+                      >
+                        <Icon className="w-4 h-4 mr-1" />
+                        {config.title}
+                      </TabsTrigger>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80 p-4" side="bottom" align="start">
+                      <div dangerouslySetInnerHTML={{ __html: config.hoverContent }} />
+                    </HoverCardContent>
+                  </HoverCard>
+                );
+              })}
             </TabsList>
           </div>
 
@@ -402,65 +406,7 @@ export function SmartAnalysisAgent() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="location" className="mt-0">
-            <Card className="bg-white border-slate-200/60 shadow-sm">
-              <CardHeader className="border-b border-slate-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
-                      <CurrentIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-slate-800">{currentConfig.title}</CardTitle>
-                      <p className="text-sm text-slate-500 mt-1">{currentConfig.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!loadingEfficiencyHtml && !loadingEfficiencyLoading && (
-                      <Button
-                        onClick={loadLoadingEfficiencyAnalysis}
-                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/25"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        生成分析
-                      </Button>
-                    )}
-                    {loadingEfficiencyHtml && (
-                      <Button
-                        variant="outline"
-                        onClick={refreshLoadingEfficiencyAnalysis}
-                        className="border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        重新生成
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loadingEfficiencyLoading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                    <span className="ml-2 text-slate-500">AI正在生成装卸货效率分析报告...</span>
-                  </div>
-                ) : loadingEfficiencyError ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                    <p className="mb-4">{loadingEfficiencyError}</p>
-                    <Button
-                      variant="outline"
-                      onClick={loadLoadingEfficiencyAnalysis}
-                      className="border-slate-200"
-                    >
-                      重试
-                    </Button>
-                  </div>
-                ) : (
-                  <IframeHtmlRenderer html={loadingEfficiencyHtml} title="装卸货效率分析" />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
       </div>
     </div>
