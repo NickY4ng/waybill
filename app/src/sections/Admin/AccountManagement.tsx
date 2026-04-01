@@ -11,17 +11,15 @@ interface Account {
   customerId: string;
   customerName: string;
   accountName: string;
-  permissions: string[];
+  permissionSql: string;
   createdAt: string;
 }
 
 const MOCK_ACCOUNTS: Account[] = [
-  { id: '1', customerId: 'C001', customerName: '北京物流有限公司', accountName: 'admin', permissions: ['全部权限'], createdAt: '2024-01-15' },
-  { id: '2', customerId: 'C002', customerName: '上海运输集团', accountName: 'shanghai01', permissions: ['查询', '导出'], createdAt: '2024-02-20' },
-  { id: '3', customerId: 'C003', customerName: '广州供应链公司', accountName: 'guangzhou01', permissions: ['查询'], createdAt: '2024-03-10' },
+  { id: '1', customerId: 'C001', customerName: '北京物流有限公司', accountName: 'admin', permissionSql: 'SELECT * FROM waybill_data', createdAt: '2024-01-15' },
+  { id: '2', customerId: 'C002', customerName: '上海运输集团', accountName: 'shanghai01', permissionSql: 'SELECT * FROM waybill_data WHERE region = "上海"', createdAt: '2024-02-20' },
+  { id: '3', customerId: 'C003', customerName: '广州供应链公司', accountName: 'guangzhou01', permissionSql: 'SELECT * FROM waybill_data WHERE region = "广州"', createdAt: '2024-03-10' },
 ];
-
-const PERMISSION_OPTIONS = ['查询', '导出', '新建', '删除', '全部权限'];
 
 export function AccountManagement() {
   const [accounts, setAccounts] = useState<Account[]>(MOCK_ACCOUNTS);
@@ -37,7 +35,11 @@ export function AccountManagement() {
     customerName: '',
     accountName: '',
     password: '',
+    permissionSql: '',
   });
+
+  // 权限SQL编辑
+  const [permissionSqlInput, setPermissionSqlInput] = useState('');
 
   const filteredAccounts = accounts.filter(account =>
     account.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -56,12 +58,12 @@ export function AccountManagement() {
       customerId: newAccount.customerId,
       customerName: newAccount.customerName,
       accountName: newAccount.accountName,
-      permissions: ['查询'],
+      permissionSql: newAccount.permissionSql || 'SELECT * FROM waybill_data',
       createdAt: new Date().toISOString().split('T')[0],
     };
     
     setAccounts([...accounts, account]);
-    setNewAccount({ customerId: '', customerName: '', accountName: '', password: '' });
+    setNewAccount({ customerId: '', customerName: '', accountName: '', password: '', permissionSql: '' });
     setIsCreateDialogOpen(false);
     alert('账号创建成功');
   };
@@ -73,15 +75,16 @@ export function AccountManagement() {
     setSelectedAccount(null);
   };
 
-  const handleUpdatePermissions = (permissions: string[]) => {
+  const handleUpdatePermissions = () => {
     if (!selectedAccount) return;
     
     setAccounts(accounts.map(acc =>
-      acc.id === selectedAccount.id ? { ...acc, permissions } : acc
+      acc.id === selectedAccount.id ? { ...acc, permissionSql: permissionSqlInput } : acc
     ));
     setIsPermissionDialogOpen(false);
     setSelectedAccount(null);
-    alert('权限更新成功');
+    setPermissionSqlInput('');
+    alert('权限SQL更新成功');
   };
 
   const handleDeleteAccount = (id: string) => {
@@ -125,7 +128,6 @@ export function AccountManagement() {
                 <TableHead>客户ID</TableHead>
                 <TableHead>客户名称</TableHead>
                 <TableHead>账号名称</TableHead>
-                <TableHead>权限</TableHead>
                 <TableHead>创建时间</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
@@ -136,18 +138,6 @@ export function AccountManagement() {
                   <TableCell>{account.customerId}</TableCell>
                   <TableCell>{account.customerName}</TableCell>
                   <TableCell>{account.accountName}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {account.permissions.map((perm, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full"
-                        >
-                          {perm}
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
                   <TableCell>{account.createdAt}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -167,6 +157,7 @@ export function AccountManagement() {
                         size="sm"
                         onClick={() => {
                           setSelectedAccount(account);
+                          setPermissionSqlInput(account.permissionSql);
                           setIsPermissionDialogOpen(true);
                         }}
                       >
@@ -259,36 +250,28 @@ export function AccountManagement() {
 
       {/* 权限设置对话框 */}
       <Dialog open={isPermissionDialogOpen} onOpenChange={setIsPermissionDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>权限设置 - {selectedAccount?.accountName}</DialogTitle>
+            <DialogTitle>权限SQL设置 - {selectedAccount?.accountName}</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-2">
-            {PERMISSION_OPTIONS.map((perm) => (
-              <label key={perm} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-slate-300"
-                  checked={selectedAccount?.permissions.includes(perm)}
-                  onChange={(e) => {
-                    const currentPerms = selectedAccount?.permissions || [];
-                    let newPerms: string[];
-                    if (e.target.checked) {
-                      newPerms = [...currentPerms, perm];
-                    } else {
-                      newPerms = currentPerms.filter(p => p !== perm);
-                    }
-                    setSelectedAccount(selectedAccount ? { ...selectedAccount, permissions: newPerms } : null);
-                  }}
-                />
-                <span>{perm}</span>
-              </label>
-            ))}
+          <div className="py-4 space-y-3">
+            <p className="text-sm text-slate-500">
+              在此输入SQL查询语句来定义该账号的数据访问权限。只有符合SQL条件的数据才会被该账号访问。
+            </p>
+            <textarea
+              value={permissionSqlInput}
+              onChange={(e) => setPermissionSqlInput(e.target.value)}
+              placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
+              className="w-full h-40 p-3 border border-slate-200 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+            />
+            <div className="text-xs text-slate-400">
+              提示：SQL语句将用于过滤该账号可查看的数据范围
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPermissionDialogOpen(false)}>取消</Button>
             <Button 
-              onClick={() => handleUpdatePermissions(selectedAccount?.permissions || [])}
+              onClick={handleUpdatePermissions}
               className="bg-gradient-to-r from-blue-500 to-cyan-500"
             >
               保存
