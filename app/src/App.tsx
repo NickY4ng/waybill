@@ -3,11 +3,22 @@ import { Header } from './sections/Header';
 import { SmartQueryAgent } from './sections/SmartQueryAgent';
 import { DataAssets } from './sections/DataAssets';
 import { DigitalHuman } from './sections/DigitalHuman';
+import { AdminPanel } from './sections/Admin';
 import { Toaster } from '@/components/ui/sonner';
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
 function App() {
   const [activeModule, setActiveModule] = useState('query');
+
+  // 后台管理模块单独渲染，不使用主布局
+  if (activeModule === 'admin') {
+    return (
+      <>
+        <AdminPanel />
+        <Toaster />
+      </>
+    );
+  }
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20 flex flex-col overflow-hidden">

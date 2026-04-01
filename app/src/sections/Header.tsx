@@ -1,4 +1,4 @@
-import { Brain, Database, Settings, User, BarChart3, Newspaper } from 'lucide-react';
+import { Brain, Database, Settings, User, BarChart3, Newspaper, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 
@@ -99,6 +99,15 @@ export function Header({ activeModule, onModuleChange }: HeaderProps) {
           </div>
         </div>
 
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onModuleChange('admin')}
+          className="text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
+          title="后台管理"
+        >
+          <Shield className="w-5 h-5" />
+        </Button>
         <Button 
           variant="ghost" 
           size="icon" 
