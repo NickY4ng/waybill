@@ -5,6 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginProps {
   onLogin: () => void;
+  onForgotPassword?: () => void;
 }
 
 // 大脑Logo组件
@@ -202,7 +203,7 @@ function PlexusBackground() {
   );
 }
 
-export function AdminLogin({ onLogin }: AdminLoginProps) {
+export function AdminLogin({ onLogin, onForgotPassword }: AdminLoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -287,7 +288,11 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600" />
                 <span className="text-slate-600">记住我</span>
               </label>
-              <button type="button" className="text-blue-600 hover:text-blue-700" onClick={() => alert('请联系客服')}>
+              <button 
+                type="button" 
+                className="text-blue-600 hover:text-blue-700" 
+                onClick={() => onForgotPassword?.()}
+              >
                 忘记密码？
               </button>
             </div>

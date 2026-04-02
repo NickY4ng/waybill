@@ -1,4 +1,4 @@
-import { Brain, Database, Settings, User, BarChart3, Shield, LogOut } from 'lucide-react';
+import { Brain, Database, Settings, User, BarChart3, Shield, LogOut, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -126,11 +126,21 @@ export function Header({ activeModule, onModuleChange }: HeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => {
-              localStorage.removeItem('admin_token');
-              localStorage.removeItem('admin_user');
-              window.location.reload();
-            }} className="flex items-center gap-2">
+            <DropdownMenuItem 
+              onClick={() => onModuleChange('change-password')} 
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Key className="w-4 h-4" />
+              <span>修改密码</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                window.location.reload();
+              }} 
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <LogOut className="w-4 h-4" />
               <span>退出账号</span>
             </DropdownMenuItem>

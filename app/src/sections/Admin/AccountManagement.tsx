@@ -46,50 +46,178 @@ function validateSql(sql: string): { valid: boolean; message: string } {
   return { valid: true, message: 'SQL格式正确' };
 }
 
+type AccountStatus = '正常' | '过期' | '禁用';
+
 interface Account {
   id: string;
-  customerId: string;
+  accountId: string;
+  cid: string;
   customerName: string;
-  accountName: string;
-  permissionSql: string;
+  phone: string;
+  email: string;
+  status: AccountStatus;
+  validStartDate: string;
+  validEndDate: string;
   createdAt: string;
+  createdBy: string;
+  permissionSql: string;
 }
 
 const MOCK_ACCOUNTS: Account[] = [
-  { id: '1', customerId: 'C001', customerName: '北京物流有限公司', accountName: 'admin', permissionSql: 'SELECT * FROM waybill_data', createdAt: '2024-01-15' },
-  { id: '2', customerId: 'C002', customerName: '上海运输集团', accountName: 'shanghai01', permissionSql: 'SELECT * FROM waybill_data WHERE region = "上海"', createdAt: '2024-02-20' },
-  { id: '3', customerId: 'C003', customerName: '广州供应链公司', accountName: 'guangzhou01', permissionSql: 'SELECT * FROM waybill_data WHERE region = "广州"', createdAt: '2024-03-10' },
+  { 
+    id: '1', 
+    accountId: 'DKYY_20250401_001',
+    cid: 'AP001', 
+    customerName: '北京物流有限公司', 
+    phone: '13800138001',
+    email: 'beijing@logistics.com',
+    status: '正常',
+    validStartDate: '2025-01-01',
+    validEndDate: '2026-12-31',
+    createdAt: '2024-01-15',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data' 
+  },
+  { 
+    id: '2', 
+    accountId: 'DKYY_20250401_002',
+    cid: 'AP002', 
+    customerName: '上海运输集团', 
+    phone: '13800138002',
+    email: 'shanghai@transport.com',
+    status: '正常',
+    validStartDate: '2025-01-01',
+    validEndDate: '2026-12-31',
+    createdAt: '2024-02-20',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data WHERE region = "上海"'
+  },
+  { 
+    id: '3', 
+    accountId: 'DKYY_20250401_003',
+    cid: '', 
+    customerName: '广州供应链公司', 
+    phone: '13800138003',
+    email: 'guangzhou@supply.com',
+    status: '正常',
+    validStartDate: '2025-03-01',
+    validEndDate: '2025-12-31',
+    createdAt: '2024-03-10',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data WHERE region = "广州"' 
+  },
+  { 
+    id: '4', 
+    accountId: 'DKYY_20250401_004',
+    cid: 'AP004', 
+    customerName: '深圳货运代理', 
+    phone: '13800138004',
+    email: 'shenzhen@cargo.com',
+    status: '过期',
+    validStartDate: '2024-01-01',
+    validEndDate: '2025-03-31',
+    createdAt: '2024-01-20',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data WHERE region = "深圳"' 
+  },
+  { 
+    id: '5', 
+    accountId: 'DKYY_20250401_005',
+    cid: 'AP005', 
+    customerName: '天津港口物流', 
+    phone: '13800138005',
+    email: 'tianjin@port.com',
+    status: '禁用',
+    validStartDate: '2025-01-01',
+    validEndDate: '2026-06-30',
+    createdAt: '2024-04-15',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data WHERE region = "天津"' 
+  },
+  { 
+    id: '6', 
+    accountId: 'DKYY_20250401_006',
+    cid: 'AP006', 
+    customerName: '重庆西部物流', 
+    phone: '13800138006',
+    email: 'chongqing@west.com',
+    status: '正常',
+    validStartDate: '2025-02-01',
+    validEndDate: '2026-02-28',
+    createdAt: '2024-05-20',
+    createdBy: 'admin',
+    permissionSql: 'SELECT * FROM waybill_data WHERE region = "重庆"' 
+  },
 ];
 
 export function AccountManagement() {
   const [accounts, setAccounts] = useState<Account[]>(MOCK_ACCOUNTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   
   // 新建账号表单
   const [newAccount, setNewAccount] = useState({
-    customerId: '',
+    cid: '',
     customerName: '',
-    accountName: '',
-    password: '',
+    phone: '',
+    email: '',
+    validStartDate: '',
+    validEndDate: '',
     permissionSql: '',
   });
 
-  // 权限SQL编辑
-  const [permissionSqlInput, setPermissionSqlInput] = useState('');
+  // 编辑账号表单
+  const [editAccount, setEditAccount] = useState({
+    cid: '',
+    customerName: '',
+    phone: '',
+    email: '',
+    validStartDate: '',
+    validEndDate: '',
+    status: '正常' as AccountStatus,
+    permissionSql: '',
+  });
 
   const filteredAccounts = accounts.filter(account =>
     account.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    account.accountName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    account.customerId.toLowerCase().includes(searchQuery.toLowerCase())
+    account.phone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const generateAccountId = () => {
+    const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const random = Math.floor(Math.random() * 900 + 100);
+    return `DKYY_${date}_${random}`;
+  };
+
+  const generateInitialPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleCreateAccount = () => {
-    if (!newAccount.customerId || !newAccount.customerName || !newAccount.accountName || !newAccount.password) {
+    if (!newAccount.customerName || !newAccount.phone || !newAccount.email || !newAccount.validStartDate || !newAccount.validEndDate) {
       alert('请填写完整信息');
+      return;
+    }
+
+    // 验证手机号格式
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!phoneRegex.test(newAccount.phone)) {
+      alert('请输入正确的手机号');
+      return;
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newAccount.email)) {
+      alert('请输入正确的邮箱地址');
       return;
     }
 
@@ -100,45 +228,78 @@ export function AccountManagement() {
       return;
     }
 
+    const initialPassword = generateInitialPassword();
     const account: Account = {
       id: Date.now().toString(),
-      customerId: newAccount.customerId,
+      accountId: generateAccountId(),
+      cid: newAccount.cid || '',
       customerName: newAccount.customerName,
-      accountName: newAccount.accountName,
-      permissionSql: newAccount.permissionSql || 'SELECT * FROM waybill_data',
+      phone: newAccount.phone,
+      email: newAccount.email,
+      status: '正常',
+      validStartDate: newAccount.validStartDate,
+      validEndDate: newAccount.validEndDate,
       createdAt: new Date().toISOString().split('T')[0],
+      createdBy: 'admin',
+      permissionSql: newAccount.permissionSql || 'SELECT * FROM waybill_data',
     };
 
     setAccounts([...accounts, account]);
-    setNewAccount({ customerId: '', customerName: '', accountName: '', password: '', permissionSql: '' });
+    setNewAccount({ cid: '', customerName: '', phone: '', email: '', validStartDate: '', validEndDate: '', permissionSql: '' });
     setIsCreateDialogOpen(false);
-    alert('账号创建成功');
+    alert(`账号创建成功！\n初始密码：${initialPassword}`);
   };
 
-  const handleResetPassword = () => {
+  const handleEditAccount = () => {
     if (!selectedAccount) return;
-    alert(`账号 ${selectedAccount.accountName} 的密码已重置为：123456`);
-    setIsResetPasswordDialogOpen(false);
-    setSelectedAccount(null);
-  };
 
-  const handleUpdatePermissions = () => {
-    if (!selectedAccount) return;
+    // 验证手机号格式
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!phoneRegex.test(editAccount.phone)) {
+      alert('请输入正确的手机号');
+      return;
+    }
+
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editAccount.email)) {
+      alert('请输入正确的邮箱地址');
+      return;
+    }
 
     // 验证SQL
-    const sqlValidation = validateSql(permissionSqlInput);
+    const sqlValidation = validateSql(editAccount.permissionSql);
     if (!sqlValidation.valid) {
       alert(`SQL验证失败：${sqlValidation.message}`);
       return;
     }
 
     setAccounts(accounts.map(acc =>
-      acc.id === selectedAccount.id ? { ...acc, permissionSql: permissionSqlInput } : acc
+      acc.id === selectedAccount.id 
+        ? { 
+            ...acc, 
+            cid: editAccount.cid,
+            customerName: editAccount.customerName,
+            phone: editAccount.phone,
+            email: editAccount.email,
+            validStartDate: editAccount.validStartDate,
+            validEndDate: editAccount.validEndDate,
+            status: editAccount.status,
+            permissionSql: editAccount.permissionSql,
+          } 
+        : acc
     ));
-    setIsPermissionDialogOpen(false);
+    setIsEditDialogOpen(false);
     setSelectedAccount(null);
-    setPermissionSqlInput('');
-    alert('权限SQL更新成功');
+    alert('账号信息更新成功');
+  };
+
+  const handleResetPassword = () => {
+    if (!selectedAccount) return;
+    const newPassword = generateInitialPassword();
+    alert(`账号 ${selectedAccount.customerName} 的密码已重置为：${newPassword}`);
+    setIsResetPasswordDialogOpen(false);
+    setSelectedAccount(null);
   };
 
   const handleDeleteAccount = (id: string) => {
@@ -146,6 +307,35 @@ export function AccountManagement() {
       setAccounts(accounts.filter(acc => acc.id !== id));
       alert('账号已删除');
     }
+  };
+
+  const openEditDialog = (account: Account) => {
+    setSelectedAccount(account);
+    setEditAccount({
+      cid: account.cid,
+      customerName: account.customerName,
+      phone: account.phone,
+      email: account.email,
+      validStartDate: account.validStartDate,
+      validEndDate: account.validEndDate,
+      status: account.status,
+      permissionSql: account.permissionSql,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const getStatusBadge = (status: AccountStatus) => {
+    const statusStyles = {
+      '正常': 'bg-green-100 text-green-700',
+      '过期': 'bg-yellow-100 text-yellow-700',
+      '禁用': 'bg-gray-100 text-gray-700',
+    };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${statusStyles[status]}`}>
+        {status}
+      </span>
+    );
   };
 
   return (
@@ -167,7 +357,7 @@ export function AccountManagement() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="搜索客户ID、客户名称或账号名称"
+                placeholder="搜索客户名称或手机号"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -179,22 +369,40 @@ export function AccountManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>客户ID</TableHead>
+                <TableHead>账号ID</TableHead>
+                <TableHead>关联CID</TableHead>
                 <TableHead>客户名称</TableHead>
-                <TableHead>账号名称</TableHead>
-                <TableHead>创建时间</TableHead>
+                <TableHead>手机号</TableHead>
+                <TableHead>邮箱</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead>有效期开始</TableHead>
+                <TableHead>有效期结束</TableHead>
+                <TableHead>创建人</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAccounts.map((account) => (
                 <TableRow key={account.id}>
-                  <TableCell>{account.customerId}</TableCell>
+                  <TableCell className="font-mono text-xs">{account.accountId}</TableCell>
+                  <TableCell>{account.cid || '-'}</TableCell>
                   <TableCell>{account.customerName}</TableCell>
-                  <TableCell>{account.accountName}</TableCell>
-                  <TableCell>{account.createdAt}</TableCell>
+                  <TableCell>{account.phone}</TableCell>
+                  <TableCell>{account.email}</TableCell>
+                  <TableCell>{getStatusBadge(account.status)}</TableCell>
+                  <TableCell>{account.validStartDate}</TableCell>
+                  <TableCell>{account.validEndDate}</TableCell>
+                  <TableCell>{account.createdBy}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(account)}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        编辑
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -209,20 +417,8 @@ export function AccountManagement() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setSelectedAccount(account);
-                          setPermissionSqlInput(account.permissionSql);
-                          setIsPermissionDialogOpen(true);
-                        }}
-                      >
-                        <Settings className="w-4 h-4 mr-1" />
-                        权限
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-600"
                         onClick={() => handleDeleteAccount(account.id)}
+                        className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -243,15 +439,15 @@ export function AccountManagement() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">客户ID</label>
+              <label className="text-sm font-medium">关联CID <span className="text-slate-400">(非必填)</span></label>
               <Input
-                placeholder="请输入客户ID"
-                value={newAccount.customerId}
-                onChange={(e) => setNewAccount({ ...newAccount, customerId: e.target.value })}
+                placeholder="请输入关联CID"
+                value={newAccount.cid}
+                onChange={(e) => setNewAccount({ ...newAccount, cid: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">客户名称</label>
+              <label className="text-sm font-medium">客户名称 <span className="text-red-500">*</span></label>
               <Input
                 placeholder="请输入客户名称"
                 value={newAccount.customerName}
@@ -259,24 +455,43 @@ export function AccountManagement() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">账号名称</label>
+              <label className="text-sm font-medium">手机号 <span className="text-red-500">*</span></label>
               <Input
-                placeholder="请输入账号名称"
-                value={newAccount.accountName}
-                onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                placeholder="请输入手机号"
+                value={newAccount.phone}
+                onChange={(e) => setNewAccount({ ...newAccount, phone: e.target.value })}
               />
+              <p className="text-xs text-slate-400">手机号将作为登录账号</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">初始密码</label>
+              <label className="text-sm font-medium">邮箱 <span className="text-red-500">*</span></label>
               <Input
-                type="password"
-                placeholder="请输入初始密码"
-                value={newAccount.password}
-                onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+                type="email"
+                placeholder="请输入邮箱"
+                value={newAccount.email}
+                onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">有效期开始 <span className="text-red-500">*</span></label>
+                <Input
+                  type="date"
+                  value={newAccount.validStartDate}
+                  onChange={(e) => setNewAccount({ ...newAccount, validStartDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">有效期结束 <span className="text-red-500">*</span></label>
+                <Input
+                  type="date"
+                  value={newAccount.validEndDate}
+                  onChange={(e) => setNewAccount({ ...newAccount, validEndDate: e.target.value })}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">权限SQL配置</label>
+              <label className="text-sm font-medium">数据权限SQL配置</label>
               <textarea
                 placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
                 value={newAccount.permissionSql}
@@ -316,6 +531,117 @@ export function AccountManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* 编辑账号对话框 */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>编辑账号 - {selectedAccount?.customerName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">关联CID</label>
+              <Input
+                placeholder="请输入关联CID"
+                value={editAccount.cid}
+                onChange={(e) => setEditAccount({ ...editAccount, cid: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">客户名称 <span className="text-red-500">*</span></label>
+              <Input
+                placeholder="请输入客户名称"
+                value={editAccount.customerName}
+                onChange={(e) => setEditAccount({ ...editAccount, customerName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">手机号 <span className="text-red-500">*</span></label>
+              <Input
+                placeholder="请输入手机号"
+                value={editAccount.phone}
+                onChange={(e) => setEditAccount({ ...editAccount, phone: e.target.value })}
+              />
+              <p className="text-xs text-slate-400">手机号将作为登录账号</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">邮箱 <span className="text-red-500">*</span></label>
+              <Input
+                type="email"
+                placeholder="请输入邮箱"
+                value={editAccount.email}
+                onChange={(e) => setEditAccount({ ...editAccount, email: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">有效期开始</label>
+                <Input
+                  type="date"
+                  value={editAccount.validStartDate}
+                  onChange={(e) => setEditAccount({ ...editAccount, validStartDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">有效期结束</label>
+                <Input
+                  type="date"
+                  value={editAccount.validEndDate}
+                  onChange={(e) => setEditAccount({ ...editAccount, validEndDate: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">账号状态</label>
+              <select
+                value={editAccount.status}
+                onChange={(e) => setEditAccount({ ...editAccount, status: e.target.value as AccountStatus })}
+                className="w-full p-2 border border-slate-200 rounded-lg"
+              >
+                <option value="正常">正常</option>
+                <option value="禁用">禁用</option>
+                <option value="过期">过期</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">数据权限SQL配置</label>
+              <textarea
+                value={editAccount.permissionSql}
+                onChange={(e) => setEditAccount({ ...editAccount, permissionSql: e.target.value })}
+                placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
+                className={`w-full h-32 p-3 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 ${
+                  editAccount.permissionSql && !validateSql(editAccount.permissionSql).valid
+                    ? 'border-red-300 bg-red-50'
+                    : editAccount.permissionSql && validateSql(editAccount.permissionSql).valid
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-slate-200'
+                }`}
+              />
+              {editAccount.permissionSql && (
+                <div className={`flex items-center gap-1 text-xs ${
+                  validateSql(editAccount.permissionSql).valid ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {validateSql(editAccount.permissionSql).valid ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      <span>{validateSql(editAccount.permissionSql).message}</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-3 h-3" />
+                      <span>{validateSql(editAccount.permissionSql).message}</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>取消</Button>
+            <Button onClick={handleEditAccount} className="bg-gradient-to-r from-blue-500 to-cyan-500">保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 重置密码对话框 */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <DialogContent className="max-w-sm">
@@ -324,68 +650,13 @@ export function AccountManagement() {
           </DialogHeader>
           <div className="py-4">
             <p className="text-slate-600">
-              确定要重置账号 <strong>{selectedAccount?.accountName}</strong> 的密码吗？
+              确定要重置账号 <strong>{selectedAccount?.customerName}</strong> 的密码吗？
             </p>
-            <p className="text-sm text-slate-400 mt-2">重置后密码将变为：123456</p>
+            <p className="text-sm text-slate-400 mt-2">重置后将生成新的随机密码</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsResetPasswordDialogOpen(false)}>取消</Button>
             <Button onClick={handleResetPassword} className="bg-gradient-to-r from-blue-500 to-cyan-500">确认重置</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 权限设置对话框 */}
-      <Dialog open={isPermissionDialogOpen} onOpenChange={setIsPermissionDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>权限SQL设置 - {selectedAccount?.accountName}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-3">
-            <p className="text-sm text-slate-500">
-              在此输入SQL查询语句来定义该账号的数据访问权限。只有符合SQL条件的数据才会被该账号访问。
-            </p>
-            <textarea
-              value={permissionSqlInput}
-              onChange={(e) => setPermissionSqlInput(e.target.value)}
-              placeholder="例如：SELECT * FROM waybill_data WHERE region = '北京'"
-              className={`w-full h-40 p-3 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 ${
-                permissionSqlInput && !validateSql(permissionSqlInput).valid
-                  ? 'border-red-300 bg-red-50'
-                  : permissionSqlInput && validateSql(permissionSqlInput).valid
-                  ? 'border-green-300 bg-green-50'
-                  : 'border-slate-200'
-              }`}
-            />
-            {permissionSqlInput && (
-              <div className={`flex items-center gap-1 text-xs ${
-                validateSql(permissionSqlInput).valid ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {validateSql(permissionSqlInput).valid ? (
-                  <>
-                    <CheckCircle className="w-3 h-3" />
-                    <span>{validateSql(permissionSqlInput).message}</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-3 h-3" />
-                    <span>{validateSql(permissionSqlInput).message}</span>
-                  </>
-                )}
-              </div>
-            )}
-            <div className="text-xs text-slate-400">
-              提示：SQL语句将用于过滤该账号可查看的数据范围
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPermissionDialogOpen(false)}>取消</Button>
-            <Button 
-              onClick={handleUpdatePermissions}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500"
-            >
-              保存
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
