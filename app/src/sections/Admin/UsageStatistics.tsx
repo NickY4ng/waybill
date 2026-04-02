@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Download, Calendar } from 'lucide-react';
+import { Search, Download, Calendar, RotateCcw } from 'lucide-react';
 
 interface UsageRecord {
   id: string;
@@ -72,7 +72,7 @@ const generateMonthOptions = () => {
 const MONTH_OPTIONS = generateMonthOptions();
 
 export function UsageStatistics() {
-  const [usageData] = useState<UsageRecord[]>(MOCK_USAGE_DATA);
+  const [usageData, setUsageData] = useState<UsageRecord[]>(MOCK_USAGE_DATA);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(MONTH_OPTIONS[0]);
 
@@ -85,8 +85,25 @@ export function UsageStatistics() {
     record.phone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 导出数据（按当前筛选结果导出）
   const handleExport = () => {
-    alert('导出功能开发中，将生成Excel文件');
+    const dataToExport = searchQuery ? filteredData : monthFilteredData;
+    const exportInfo = searchQuery 
+      ? `按搜索条件导出：${searchQuery}，共 ${dataToExport.length} 条记录`
+      : `导出全部数据：共 ${dataToExport.length} 条记录`;
+    alert(`${exportInfo}\n\n导出功能开发中，将生成Excel文件`);
+  };
+
+  // 重置单个账号次数
+  const handleResetSingle = (record: UsageRecord) => {
+    if (confirm(`确定要重置账号「${record.customerName}」的提问次数吗？`)) {
+      setUsageData(usageData.map(item => 
+        item.id === record.id 
+          ? { ...item, queryCount: 0, lastQueryTime: '-' }
+          : item
+      ));
+      alert(`账号「${record.customerName}」的次数已重置`);
+    }
   };
 
   // 格式化月份显示
@@ -100,14 +117,16 @@ export function UsageStatistics() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">消耗次数统计</h1>
-        <Button
-          onClick={handleExport}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
-          导出Excel
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            导出Excel
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -143,11 +162,15 @@ export function UsageStatistics() {
             <p className="text-sm text-blue-700">
               当前统计月份：<span className="font-semibold">{formatMonth(selectedMonth)}</span>
               <span className="ml-4">共 {filteredData.length} 个账号</span>
+              {searchQuery && (
+                <span className="ml-4 text-blue-600">（搜索结果：{searchQuery}）</span>
+              )}
             </p>
           </div>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>操作</TableHead>
                 <TableHead>账号ID</TableHead>
                 <TableHead>关联CID</TableHead>
                 <TableHead>客户名称</TableHead>
@@ -160,6 +183,17 @@ export function UsageStatistics() {
             <TableBody>
               {filteredData.map((record) => (
                 <TableRow key={record.id}>
+                  <TableCell>
+                    <Button
+                      onClick={() => handleResetSingle(record)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      重置
+                    </Button>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{record.accountId}</TableCell>
                   <TableCell>{record.cid || '-'}</TableCell>
                   <TableCell>{record.customerName}</TableCell>

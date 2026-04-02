@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Key, Settings, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Plus, Key, Settings, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 
 // SQL验证函数
 function validateSql(sql: string): { valid: boolean; message: string } {
@@ -157,6 +157,7 @@ export function AccountManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [decryptedPhones, setDecryptedPhones] = useState<Set<string>>(new Set());
   
   // 新建账号表单
   const [newAccount, setNewAccount] = useState({
@@ -302,11 +303,21 @@ export function AccountManagement() {
     setSelectedAccount(null);
   };
 
-  const handleDeleteAccount = (id: string) => {
-    if (confirm('确定要删除这个账号吗？')) {
-      setAccounts(accounts.filter(acc => acc.id !== id));
-      alert('账号已删除');
+  // 手机号脱敏显示
+  const maskPhone = (phone: string) => {
+    if (phone.length !== 11) return phone;
+    return phone.slice(0, 3) + '****' + phone.slice(7);
+  };
+
+  // 切换手机号解密状态
+  const togglePhoneDecrypt = (accountId: string) => {
+    const newDecrypted = new Set(decryptedPhones);
+    if (newDecrypted.has(accountId)) {
+      newDecrypted.delete(accountId);
+    } else {
+      newDecrypted.add(accountId);
     }
+    setDecryptedPhones(newDecrypted);
   };
 
   const openEditDialog = (account: Account) => {
@@ -369,6 +380,7 @@ export function AccountManagement() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>操作</TableHead>
                 <TableHead>账号ID</TableHead>
                 <TableHead>关联CID</TableHead>
                 <TableHead>客户名称</TableHead>
@@ -378,21 +390,11 @@ export function AccountManagement() {
                 <TableHead>有效期开始</TableHead>
                 <TableHead>有效期结束</TableHead>
                 <TableHead>创建人</TableHead>
-                <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAccounts.map((account) => (
                 <TableRow key={account.id}>
-                  <TableCell className="font-mono text-xs">{account.accountId}</TableCell>
-                  <TableCell>{account.cid || '-'}</TableCell>
-                  <TableCell>{account.customerName}</TableCell>
-                  <TableCell>{account.phone}</TableCell>
-                  <TableCell>{account.email}</TableCell>
-                  <TableCell>{getStatusBadge(account.status)}</TableCell>
-                  <TableCell>{account.validStartDate}</TableCell>
-                  <TableCell>{account.validEndDate}</TableCell>
-                  <TableCell>{account.createdBy}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Button
@@ -414,16 +416,33 @@ export function AccountManagement() {
                         <Key className="w-4 h-4 mr-1" />
                         重置密码
                       </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{account.accountId}</TableCell>
+                  <TableCell>{account.cid || '-'}</TableCell>
+                  <TableCell>{account.customerName}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span>{decryptedPhones.has(account.id) ? account.phone : maskPhone(account.phone)}</span>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteAccount(account.id)}
-                        className="text-red-500 hover:text-red-600"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => togglePhoneDecrypt(account.id)}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {decryptedPhones.has(account.id) ? (
+                          <EyeOff className="w-3 h-3 text-slate-400" />
+                        ) : (
+                          <Eye className="w-3 h-3 text-slate-400" />
+                        )}
                       </Button>
                     </div>
                   </TableCell>
+                  <TableCell>{account.email}</TableCell>
+                  <TableCell>{getStatusBadge(account.status)}</TableCell>
+                  <TableCell>{account.validStartDate}</TableCell>
+                  <TableCell>{account.validEndDate}</TableCell>
+                  <TableCell>{account.createdBy}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
