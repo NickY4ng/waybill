@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Send, Bot, User, Loader2, Sparkles, Plus, Trash2, Download, Eye, FileText, Check, X, Upload, Shield, Cpu, BarChart3, MapPin, TrendingUp, Users, Activity, Database, LineChart, FileBarChart, BrainCircuit, Maximize2, Minimize2, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { clearBailianSession } from '@/services/bailianApi';
 
-// 鼠标跟随Tooltip组件
+// 鼠标跟随Tooltip组件 - 使用Portal渲染到body
 interface MouseFollowTooltipProps {
   children: React.ReactNode;
   content: string;
@@ -17,24 +18,18 @@ function MouseFollowTooltip({ children, content }: MouseFollowTooltipProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      // 计算相对于容器的位置，让浮窗紧贴鼠标
-      setPosition({ 
-        x: e.clientX - rect.left + 10, 
-        y: e.clientY - rect.top + 10 
-      });
-    }
+    // 使用全局鼠标位置，让浮窗在整个页面显示
+    setPosition({ 
+      x: e.clientX + 10, 
+      y: e.clientY + 10 
+    });
   };
 
   const handleMouseEnter = (e: React.MouseEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setPosition({ 
-        x: e.clientX - rect.left + 10, 
-        y: e.clientY - rect.top + 10 
-      });
-    }
+    setPosition({ 
+      x: e.clientX + 10, 
+      y: e.clientY + 10 
+    });
     setIsVisible(true);
   };
 
@@ -42,27 +37,36 @@ function MouseFollowTooltip({ children, content }: MouseFollowTooltipProps) {
     setIsVisible(false);
   };
 
+  // 防止浮窗超出屏幕边界
+  const adjustedPosition = {
+    x: Math.min(position.x, window.innerWidth - 340),
+    y: Math.min(position.y, window.innerHeight - 200),
+  };
+
   return (
-    <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative"
-    >
-      {children}
-      {isVisible && (
+    <>
+      <div
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative"
+      >
+        {children}
+      </div>
+      {isVisible && createPortal(
         <div
-          className="absolute z-[9999] w-80 bg-white border border-slate-200 rounded-lg shadow-lg pointer-events-none"
+          className="fixed z-[2147483647] w-80 bg-white border border-slate-200 rounded-lg shadow-lg pointer-events-none"
           style={{
-            left: `${position.x}px`,
-            top: `${position.y}px`,
+            left: `${adjustedPosition.x}px`,
+            top: `${adjustedPosition.y}px`,
           }}
         >
           <div dangerouslySetInnerHTML={{ __html: content }} />
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 import { callDeepAnalysisAgent, downloadHtmlReport, isHtmlReport, clearDeepAnalysisSession } from '@/services/deepAnalysisApi';
@@ -102,6 +106,20 @@ interface DeepAnalysisTask {
   endTime?: Date;
 }
 
+// CSV下载任务类型
+interface CsvDownloadTask {
+  id: string;
+  messageId: string;
+  fileName: string;
+  status: 'generating' | 'completed' | 'failed';
+  progress: number;
+  totalRows: number;
+  processedRows: number;
+  data?: string;
+  createdAt: Date;
+  completedAt?: Date;
+}
+
 // 专家类型
 interface Expert {
   id: string;
@@ -134,6 +152,18 @@ interface AnalysisTemplate {
   prompt: string;
   hoverContent: string;
 }
+
+// 自定义模板类型
+interface CustomTemplate {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+// 自定义模板存储键
+const CUSTOM_TEMPLATES_KEY = 'daka_custom_templates';
 
 // 分析模板列表
 const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
@@ -277,6 +307,7 @@ const EXAMPLE_QUERIES = [
   '分析全国货物流向',
   '给我输出一个物流时效的分析方案',
   '统计25年全年运单数',
+  '导出北京到河北的运单数据',
 ];
 
 // 生成会话标题
@@ -339,11 +370,26 @@ export function SmartQueryAgent() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
 
+  // 自定义模板状态
+  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(() => {
+    const saved = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showCustomTemplateDialog, setShowCustomTemplateDialog] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(null);
+  const [customTemplateForm, setCustomTemplateForm] = useState({
+    title: '',
+    description: '',
+  });
+
   // 加载状态
   const [isLoading, setIsLoading] = useState(false);
   const [, setDeepAnalysisTasks] = useState<DeepAnalysisTask[]>([]);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [isQueryRunning, setIsQueryRunning] = useState(false);
+
+  // CSV下载任务状态
+  const [csvTasks, setCsvTasks] = useState<CsvDownloadTask[]>([]);
 
   // 分析阶段状态
   const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>('requirement');
@@ -594,9 +640,73 @@ export function SmartQueryAgent() {
     }
   };
 
+  // 检测是否是CSV下载请求
+  const isCsvDownloadRequest = (text: string): { isRequest: boolean; dataType: string } => {
+    const downloadKeywords = ['下载', '导出', '提取', '导出数据', '下载数据'];
+    const isRequest = downloadKeywords.some(keyword => text.includes(keyword));
+    
+    // 根据内容推断数据类型
+    let dataType = '运单数据';
+    if (text.includes('北京') && text.includes('河北')) {
+      dataType = '北京到河北运单';
+    } else if (text.includes('2024') || text.includes('10月')) {
+      dataType = '2024年10月数据';
+    } else if (text.includes('煤炭')) {
+      dataType = '煤炭运输数据';
+    } else if (text.includes('山西')) {
+      dataType = '山西运单数据';
+    }
+    
+    return { isRequest, dataType };
+  };
+
   // 处理发送消息
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+
+    // 检测是否是CSV下载请求（演示用途）
+    const { isRequest, dataType } = isCsvDownloadRequest(input);
+    if (isRequest) {
+      // 创建用户消息
+      const userMessageId = Date.now().toString();
+      const userMessage: Message = {
+        id: userMessageId,
+        type: 'user',
+        content: input,
+        timestamp: new Date(),
+      };
+
+      // 创建AI回复消息
+      const botMessageId = (Date.now() + 1).toString();
+      const botMessage: Message = {
+        id: botMessageId,
+        type: 'bot',
+        content: `已收到您的数据导出请求，正在为您准备「${dataType}」的CSV文件，请稍候...`,
+        timestamp: new Date(),
+      };
+
+      setSessions(prev => prev.map(session => {
+        if (session.id === currentSessionId) {
+          const newMessages = [...session.messages, userMessage, botMessage];
+          return {
+            ...session,
+            messages: newMessages,
+            title: session.title === '新会话' ? generateSessionTitle(newMessages) : session.title,
+            updatedAt: new Date(),
+          };
+        }
+        return session;
+      }));
+
+      setInput('');
+      
+      // 启动CSV下载任务
+      setTimeout(() => {
+        startCsvDownloadTask(botMessageId, dataType);
+      }, 500);
+      
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -841,6 +951,112 @@ export function SmartQueryAgent() {
     downloadHtmlReport(content, filename);
   };
 
+  // 生成CSV文件名
+  const generateCsvFileName = (dataType: string): string => {
+    const now = new Date();
+    const dateStr = now.getFullYear() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0');
+    const timeStr = String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0');
+    return `${dataType}_${dateStr}_${timeStr}.csv`;
+  };
+
+  // 模拟生成CSV数据
+  const generateMockCsvData = (rowCount: number): string => {
+    const headers = ['运单号', '出发地', '目的地', '货物类型', '重量(吨)', '发货时间', '到达时间', '运费(元)'];
+    const cities = ['北京', '上海', '广州', '深圳', '天津', '重庆', '武汉', '南京', '杭州', '成都'];
+    const cargoTypes = ['电子产品', '服装', '食品', '建材', '化工', '家具', '机械设备'];
+    
+    let csv = headers.join(',') + '\n';
+    
+    for (let i = 0; i < rowCount; i++) {
+      const fromCity = cities[Math.floor(Math.random() * cities.length)];
+      let toCity = cities[Math.floor(Math.random() * cities.length)];
+      while (toCity === fromCity) {
+        toCity = cities[Math.floor(Math.random() * cities.length)];
+      }
+      
+      const waybillNo = 'YD' + String(Date.now()).slice(-8) + String(i).padStart(4, '0');
+      const cargoType = cargoTypes[Math.floor(Math.random() * cargoTypes.length)];
+      const weight = (Math.random() * 30 + 1).toFixed(2);
+      const startDate = new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1);
+      const endDate = new Date(startDate.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000);
+      const freight = Math.floor(Math.random() * 5000 + 500);
+      
+      csv += `${waybillNo},${fromCity},${toCity},${cargoType},${weight},${startDate.toISOString().split('T')[0]},${endDate.toISOString().split('T')[0]},${freight}\n`;
+    }
+    
+    return csv;
+  };
+
+  // 开始CSV下载任务（模拟）
+  const startCsvDownloadTask = (messageId: string, dataType: string) => {
+    const taskId = Date.now().toString();
+    const totalRows = Math.floor(Math.random() * 5000) + 1000; // 模拟1000-6000行数据
+    
+    const newTask: CsvDownloadTask = {
+      id: taskId,
+      messageId,
+      fileName: generateCsvFileName(dataType),
+      status: 'generating',
+      progress: 0,
+      totalRows,
+      processedRows: 0,
+      createdAt: new Date(),
+    };
+    
+    setCsvTasks(prev => [...prev, newTask]);
+    
+    // 模拟进度更新
+    const interval = setInterval(() => {
+      setCsvTasks(prev => {
+        const task = prev.find(t => t.id === taskId);
+        if (!task || task.status !== 'generating') {
+          clearInterval(interval);
+          return prev;
+        }
+        
+        const increment = Math.floor(Math.random() * 200) + 50;
+        const newProcessed = Math.min(task.processedRows + increment, task.totalRows);
+        const newProgress = Math.floor((newProcessed / task.totalRows) * 100);
+        
+        if (newProcessed >= task.totalRows) {
+          // 完成
+          clearInterval(interval);
+          const csvData = generateMockCsvData(task.totalRows);
+          return prev.map(t => 
+            t.id === taskId 
+              ? { ...t, status: 'completed', progress: 100, processedRows: task.totalRows, data: csvData, completedAt: new Date() }
+              : t
+          );
+        }
+        
+        return prev.map(t => 
+          t.id === taskId 
+            ? { ...t, progress: newProgress, processedRows: newProcessed }
+            : t
+        );
+      });
+    }, 200);
+  };
+
+  // 下载CSV文件
+  const handleDownloadCsv = (task: CsvDownloadTask) => {
+    if (!task.data) return;
+    
+    const blob = new Blob(['\ufeff' + task.data], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = task.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // 点击HTML报告消息
   const handleHtmlMessageClick = (message: Message) => {
     if (message.isHtml && message.isDeepAnalysis) {
@@ -855,6 +1071,86 @@ export function SmartQueryAgent() {
   const handleSelectTemplate = (template: AnalysisTemplate) => {
     setSelectedTemplate(template);
     setShowTemplateDialog(false);
+  };
+
+  // 选择自定义模板
+  const handleSelectCustomTemplate = (template: CustomTemplate) => {
+    setInput(`【使用自定义模板：${template.title}】\n\n${template.description}\n\n请基于以上分析框架进行深度分析：`);
+    setShowTemplateDialog(false);
+  };
+
+  // 保存自定义模板到localStorage
+  const saveCustomTemplates = (templates: CustomTemplate[]) => {
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
+    setCustomTemplates(templates);
+  };
+
+  // 打开新建模板弹窗
+  const handleOpenNewTemplate = () => {
+    setEditingTemplate(null);
+    setCustomTemplateForm({
+      title: '',
+      description: '【分析目的】\n\n\n【分析维度】\n\n',
+    });
+    setShowCustomTemplateDialog(true);
+  };
+
+  // 打开编辑模板弹窗
+  const handleOpenEditTemplate = (template: CustomTemplate, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingTemplate(template);
+    setCustomTemplateForm({
+      title: template.title,
+      description: template.description,
+    });
+    setShowCustomTemplateDialog(true);
+  };
+
+  // 保存自定义模板
+  const handleSaveCustomTemplate = () => {
+    if (!customTemplateForm.title.trim()) {
+      alert('请输入模板标题');
+      return;
+    }
+    if (!customTemplateForm.description.trim()) {
+      alert('请输入维度说明');
+      return;
+    }
+    if (customTemplateForm.description.length > 1000) {
+      alert('维度说明不能超过1000字');
+      return;
+    }
+
+    const now = Date.now();
+    if (editingTemplate) {
+      // 编辑模式
+      const updated = customTemplates.map(t =>
+        t.id === editingTemplate.id
+          ? { ...t, title: customTemplateForm.title, description: customTemplateForm.description, updatedAt: now }
+          : t
+      );
+      saveCustomTemplates(updated);
+    } else {
+      // 新建模式
+      const newTemplate: CustomTemplate = {
+        id: now.toString(),
+        title: customTemplateForm.title,
+        description: customTemplateForm.description,
+        createdAt: now,
+        updatedAt: now,
+      };
+      saveCustomTemplates([newTemplate, ...customTemplates]);
+    }
+    setShowCustomTemplateDialog(false);
+  };
+
+  // 删除自定义模板
+  const handleDeleteCustomTemplate = (templateId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('确定要删除这个自定义模板吗？')) {
+      const filtered = customTemplates.filter(t => t.id !== templateId);
+      saveCustomTemplates(filtered);
+    }
   };
 
   // 清除模板选择
@@ -1260,84 +1556,155 @@ export function SmartQueryAgent() {
         {/* 消息区域 */}
         <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-slate-50/30">
           <div className="max-w-4xl mx-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
-              >
+            {messages.map((message) => {
+              // 查找该消息关联的CSV任务
+              const messageCsvTasks = csvTasks.filter(task => task.messageId === message.id);
+              
+              return (
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md ${
-                    message.type === 'user'
-                      ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                      : message.isHtml
-                      ? 'bg-gradient-to-br from-purple-500 to-pink-500'
-                      : 'bg-gradient-to-br from-violet-500 to-purple-600'
-                  }`}
+                  key={message.id}
+                  className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  {message.type === 'user' ? (
-                    <User className="w-5 h-5 text-white" />
-                  ) : (
-                    <Bot className="w-5 h-5 text-white" />
-                  )}
-                </div>
-                <div
-                  className={`max-w-[85%] ${
-                    message.type === 'user'
-                      ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-2xl px-4 py-3'
-                      : message.isHtml
-                      ? 'bg-white rounded-xl border border-purple-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all'
-                      : 'bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3'
-                  }`}
-                  onClick={() => handleHtmlMessageClick(message)}
-                >
-                  {message.isHtml ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-purple-600">
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-white" />
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md ${
+                      message.type === 'user'
+                        ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
+                        : message.isHtml
+                        ? 'bg-gradient-to-br from-purple-500 to-pink-500'
+                        : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                    }`}
+                  >
+                    {message.type === 'user' ? (
+                      <User className="w-5 h-5 text-white" />
+                    ) : (
+                      <Bot className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <div className="max-w-[85%] space-y-3">
+                    <div
+                      className={`${
+                        message.type === 'user'
+                          ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-2xl px-4 py-3'
+                          : message.isHtml
+                          ? 'bg-white rounded-xl border border-purple-100 shadow-sm p-4 cursor-pointer hover:shadow-md transition-all'
+                          : 'bg-white rounded-xl border border-slate-100 shadow-sm px-4 py-3'
+                      }`}
+                      onClick={() => handleHtmlMessageClick(message)}
+                    >
+                      {message.isHtml ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-purple-600">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                              <FileText className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="text-sm font-bold">深度分析报告已生成</span>
+                          </div>
+                          <div className="text-slate-600 text-sm leading-relaxed">
+                            已完成多维度深度分析，包含地理流向、货类构成、成本水平、时效效率等核心指标的可视化图表。
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleHtmlMessageClick(message);
+                              }}
+                              className="h-8 text-xs border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-lg"
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" />
+                              查看报告
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadHtml(message.content);
+                              }}
+                              className="h-8 text-xs border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
+                            >
+                              <Download className="w-3.5 h-3.5 mr-1" />
+                              下载HTML
+                            </Button>
+                          </div>
                         </div>
-                        <span className="text-sm font-bold">深度分析报告已生成</span>
-                      </div>
-                      <div className="text-slate-600 text-sm leading-relaxed">
-                        已完成多维度深度分析，包含地理流向、货类构成、成本水平、时效效率等核心指标的可视化图表。
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleHtmlMessageClick(message);
-                          }}
-                          className="h-8 text-xs border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700 rounded-lg"
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1" />
-                          查看报告
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadHtml(message.content);
-                          }}
-                          className="h-8 text-xs border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg"
-                        >
-                          <Download className="w-3.5 h-3.5 mr-1" />
-                          下载HTML
-                        </Button>
-                      </div>
+                      ) : (
+                        <div className={`prose prose-sm max-w-none leading-relaxed ${message.type === 'user' ? 'text-white prose-invert' : 'text-slate-700'}`}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className={`prose prose-sm max-w-none leading-relaxed ${message.type === 'user' ? 'text-white prose-invert' : 'text-slate-700'}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
-                  )}
+                    
+                    {/* CSV下载任务展示 */}
+                    {messageCsvTasks.length > 0 && (
+                      <div className="space-y-2">
+                        {messageCsvTasks.map(task => (
+                          <div
+                            key={task.id}
+                            className={`rounded-xl border p-3 ${
+                              task.status === 'generating'
+                                ? 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+                                : task.status === 'completed'
+                                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+                                : 'bg-gradient-to-r from-red-50 to-orange-50 border-red-200'
+                            }`}
+                          >
+                            {task.status === 'generating' ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                                  <span className="text-sm font-medium text-slate-700">正在生成CSV文件...</span>
+                                  <span className="text-xs text-slate-500 ml-auto">{task.progress}%</span>
+                                </div>
+                                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full transition-all duration-300"
+                                    style={{ width: `${task.progress}%` }}
+                                  />
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  已处理 {task.processedRows.toLocaleString()} / {task.totalRows.toLocaleString()} 行数据
+                                </div>
+                              </div>
+                            ) : task.status === 'completed' ? (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                    <FileText className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <div className="text-sm font-medium text-slate-700">{task.fileName}</div>
+                                    <div className="text-xs text-slate-500">
+                                      {task.totalRows.toLocaleString()} 行数据 • 
+                                      {task.completedAt ? new Date(task.completedAt).toLocaleString() : ''}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDownloadCsv(task)}
+                                  className="h-8 text-xs bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg"
+                                >
+                                  <Download className="w-3.5 h-3.5 mr-1" />
+                                  下载CSV
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-red-600">
+                                <span className="text-sm">生成失败，请重试</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {isLoading && (
               <div className="flex gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-md">
@@ -1568,29 +1935,206 @@ export function SmartQueryAgent() {
 
       {/* 模板选择弹窗 */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle>选择分析模板</DialogTitle>
+            <Button
+              onClick={handleOpenNewTemplate}
+              size="sm"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              新建模板
+            </Button>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            {ANALYSIS_TEMPLATES.map((template) => (
-              <MouseFollowTooltip key={template.id} content={template.hoverContent}>
-                <button
-                  onClick={() => handleSelectTemplate(template)}
-                  className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-left group w-full"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
-                      {template.icon}
+          
+          {/* 固定模板区域 */}
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-slate-500 mb-3">系统模板</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {ANALYSIS_TEMPLATES.map((template) => (
+                <MouseFollowTooltip key={template.id} content={template.hoverContent}>
+                  <button
+                    onClick={() => handleSelectTemplate(template)}
+                    className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-left group w-full"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                        {template.icon}
+                      </div>
+                      <span className="font-medium text-slate-700 group-hover:text-purple-700">
+                        {template.name}
+                      </span>
                     </div>
-                    <span className="font-medium text-slate-700 group-hover:text-purple-700">
-                      {template.name}
-                    </span>
+                    <p className="text-xs text-slate-500">{template.description}</p>
+                  </button>
+                </MouseFollowTooltip>
+              ))}
+            </div>
+          </div>
+
+          {/* 自定义模板区域 */}
+          {customTemplates.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-slate-500 mb-3">
+                自定义模板 ({customTemplates.length}个)
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                {customTemplates.map((template) => {
+                  // 生成自定义模板的hoverContent
+                  const customHoverContent = `
+                    <div class="p-3 text-xs">
+                      <h4 class="font-semibold mb-1.5 text-sm">${template.title}</h4>
+                      <div class="text-slate-600 whitespace-pre-wrap">${template.description.replace(/\n/g, '<br/>')}</div>
+                      <div class="mt-2 text-xs text-slate-400">
+                        创建时间：${new Date(template.createdAt).toLocaleString()}<br/>
+                        更新时间：${new Date(template.updatedAt).toLocaleString()}
+                      </div>
+                    </div>
+                  `;
+                  return (
+                    <MouseFollowTooltip key={template.id} content={customHoverContent}>
+                      <div
+                        className="relative p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all group cursor-pointer"
+                        onClick={() => handleSelectCustomTemplate(template)}
+                      >
+                        <div className="w-full text-left">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="font-medium text-slate-700 group-hover:text-blue-700 block truncate">
+                                {template.title}
+                              </span>
+                              <span className="text-xs text-slate-400">
+                                {new Date(template.updatedAt).toLocaleDateString()} 更新
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-500 line-clamp-2">
+                            {template.description.replace(/【.*?】/g, '').substring(0, 60)}...
+                          </p>
+                        </div>
+                        {/* 编辑和删除按钮 */}
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => handleOpenEditTemplate(template, e)}
+                            className="p-1.5 bg-white hover:bg-blue-50 rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600 transition-all"
+                            title="编辑"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteCustomTemplate(template.id, e)}
+                            className="p-1.5 bg-white hover:bg-red-50 rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-red-600 transition-all"
+                            title="删除"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </MouseFollowTooltip>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 空状态提示 */}
+          {customTemplates.length === 0 && (
+            <div className="mt-6 p-8 text-center border border-dashed border-slate-200 rounded-xl">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">暂无自定义模板</p>
+              <p className="text-xs text-slate-400 mt-1">点击右上角"新建模板"创建您的第一个模板</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 自定义模板编辑弹窗 */}
+      <Dialog open={showCustomTemplateDialog} onOpenChange={setShowCustomTemplateDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingTemplate ? '编辑自定义模板' : '新建自定义模板'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-4">
+            {/* 标题输入 */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                模板标题 <span className="text-red-500">*</span>
+              </label>
+              <Input
+                value={customTemplateForm.title}
+                onChange={(e) => setCustomTemplateForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="请输入模板标题，如：煤炭运输分析"
+                maxLength={50}
+                className="border-slate-200 focus:border-purple-400"
+              />
+              <div className="text-xs text-slate-400 text-right">
+                {customTemplateForm.title.length}/50
+              </div>
+            </div>
+
+            {/* 维度说明输入 */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                维度说明 <span className="text-red-500">*</span>
+                <span className="text-xs font-normal text-slate-400 ml-2">最多1000字</span>
+              </label>
+              <div className="relative">
+                <textarea
+                  value={customTemplateForm.description}
+                  onChange={(e) => setCustomTemplateForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="【分析目的】&#10;&#10;请描述分析的目的...&#10;&#10;【分析维度】&#10;&#10;请列出分析的维度..."
+                  maxLength={1000}
+                  rows={12}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/20 focus:border-purple-400 resize-none font-mono text-sm leading-relaxed"
+                />
+                {/* 格式提示 */}
+                <div className="absolute bottom-3 left-3 right-3 bg-amber-50 border border-amber-100 rounded-lg p-2 text-xs text-amber-700">
+                  <span className="font-medium">格式示例：</span>
+                  使用 【分析目的】和【分析维度】标签组织内容，支持多维度列举
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs ${customTemplateForm.description.length > 900 ? 'text-amber-600' : 'text-slate-400'}`}>
+                  {customTemplateForm.description.length}/1000 字
+                </span>
+                {customTemplateForm.description.length > 1000 && (
+                  <span className="text-xs text-red-500">已超出字数限制</span>
+                )}
+              </div>
+            </div>
+
+            {/* 预览区域 */}
+            {customTemplateForm.description && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">预览效果</label>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                    {customTemplateForm.description}
                   </div>
-                  <p className="text-xs text-slate-500">{template.description}</p>
-                </button>
-              </MouseFollowTooltip>
-            ))}
+                </div>
+              </div>
+            )}
+
+            {/* 操作按钮 */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <Button
+                variant="outline"
+                onClick={() => setShowCustomTemplateDialog(false)}
+              >
+                取消
+              </Button>
+              <Button
+                onClick={handleSaveCustomTemplate}
+                disabled={!customTemplateForm.title.trim() || !customTemplateForm.description.trim() || customTemplateForm.description.length > 1000}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              >
+                {editingTemplate ? '保存修改' : '创建模板'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
