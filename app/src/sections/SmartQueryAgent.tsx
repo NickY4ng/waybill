@@ -1,74 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Send, Bot, User, Loader2, Sparkles, Plus, Trash2, Download, Eye, FileText, Check, X, Upload, Shield, Cpu, BarChart3, MapPin, TrendingUp, Users, Activity, Database, LineChart, FileBarChart, BrainCircuit, Maximize2, Minimize2, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, Plus, Trash2, Download, Eye, FileText, Check, X, Upload, Shield, Cpu, BarChart3, MapPin, TrendingUp, Users, Activity, Database, LineChart, FileBarChart, BrainCircuit, Maximize2, Minimize2, MessageSquare, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { clearBailianSession } from '@/services/bailianApi';
 
-// 鼠标跟随Tooltip组件 - 使用Portal渲染到body
-interface MouseFollowTooltipProps {
-  children: React.ReactNode;
-  content: string;
-}
 
-function MouseFollowTooltip({ children, content }: MouseFollowTooltipProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // 使用全局鼠标位置，让浮窗在整个页面显示
-    setPosition({ 
-      x: e.clientX + 10, 
-      y: e.clientY + 10 
-    });
-  };
-
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    setPosition({ 
-      x: e.clientX + 10, 
-      y: e.clientY + 10 
-    });
-    setIsVisible(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsVisible(false);
-  };
-
-  // 防止浮窗超出屏幕边界
-  const adjustedPosition = {
-    x: Math.min(position.x, window.innerWidth - 340),
-    y: Math.min(position.y, window.innerHeight - 200),
-  };
-
-  return (
-    <>
-      <div
-        ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative"
-      >
-        {children}
-      </div>
-      {isVisible && createPortal(
-        <div
-          className="fixed z-[2147483647] w-80 bg-white border border-slate-200 rounded-lg shadow-lg pointer-events-none"
-          style={{
-            left: `${adjustedPosition.x}px`,
-            top: `${adjustedPosition.y}px`,
-          }}
-        >
-          <div dangerouslySetInnerHTML={{ __html: content }} />
-        </div>,
-        document.body
-      )}
-    </>
-  );
-}
 import { callDeepAnalysisAgent, downloadHtmlReport, isHtmlReport, clearDeepAnalysisSession } from '@/services/deepAnalysisApi';
 import { incrementServiceCount } from '@/sections/Header';
 import ReactMarkdown from 'react-markdown';
@@ -153,69 +91,109 @@ interface AnalysisTemplate {
   hoverContent: string;
 }
 
-// 自定义模板类型
-interface CustomTemplate {
+// 能力分类类型
+type CapabilityCategory = 'analysis' | 'download' | 'decrypt';
+
+// 能力卡片类型
+interface CapabilityCard {
   id: string;
+  icon: string;
   title: string;
   description: string;
-  createdAt: number;
-  updatedAt: number;
+  category: CapabilityCategory;
+  prompt?: string;
+  hasPermission?: boolean; // 是否有权限使用
 }
 
-// 自定义模板存储键
-const CUSTOM_TEMPLATES_KEY = 'daka_custom_templates';
-
-// 分析模板列表
-const ANALYSIS_TEMPLATES: AnalysisTemplate[] = [
+// 能力卡片数据
+const CAPABILITY_CARDS: CapabilityCard[] = [
+  // 分析模板
   {
-    id: 'flow',
-    name: '货物流向分析',
-    icon: <MapPin className="w-5 h-5" />,
-    description: '分析区域间货物流动特征、热门线路、流向分布',
-    prompt: '请对以下问题进行货物流向深度分析，重点关注：1）主要流向分布 2）热门运输线路 3）区域间货物流动特征 4）货类构成分析',
-    hoverContent: `
-      <div class="p-3 text-xs">
-        <h4 class="font-semibold mb-1.5 text-sm">分析目的：</h4>
-        <p class="mb-2.5 text-slate-600">提供标准化的货物流向分析框架，基于虚拟运单数据从8个维度全面理解货物运输特征，支持区域规划、货类洞察、运力优化等决策需求。</p>
-        <h4 class="font-semibold mb-1.5 text-sm">8个分析维度：</h4>
-        <ul class="list-disc pl-4 space-y-0.5 text-slate-600">
-          <li>区域流向维度 - 分析货物从出发地到目的地的流动特征</li>
-          <li>货类流向维度 - 分析不同货类的特定流向特征</li>
-          <li>POI类型维度 - 按场站POI类型分析流向</li>
-          <li>时间趋势维度 - 分析月度、季度、年度货物流向变化，识别季节性波动和长期趋势</li>
-          <li>流向集中度维度 - 统计热门线路占比，评估货物流向集中或分散程度</li>
-          <li>距离分布维度 - 按运输距离区间分析特征</li>
-          <li>线路维度 - 分析线路分布及特征</li>
-          <li>车辆属性维度 - 分析参与运输车辆的静态基本信息</li>
-        </ul>
-      </div>
-    `
+    id: 'same-region',
+    icon: '🚚',
+    title: '同区域货物流向分析',
+    description: '分析同一区域内车辆的货物来源与去向，识别本地物流热点。',
+    category: 'analysis',
+    prompt: '请对同一区域内的货物流向进行分析，重点关注：1）区域内货物来源分布 2）区域内货物去向分布 3）本地物流热点识别 4）区域内运输特征',
+    hasPermission: true
   },
   {
-    id: 'supplychain',
-    name: '上下游分析',
-    icon: <Users className="w-5 h-5" />,
-    description: '分析企业供应链关系、合作伙伴、网络密度',
+    id: 'cross-region',
+    icon: '🚛',
+    title: '跨区域货物流向分析',
+    description: '分析跨区域运输的货物流动特征，识别主要运输通道。',
+    category: 'analysis',
+    prompt: '请对跨区域货物流向进行分析，重点关注：1）跨区域运输线路分布 2）主要运输通道识别 3）货物流量分析 4）运输效率评估',
+    hasPermission: true
+  },
+  {
+    id: 'supply-chain',
+    icon: '📊',
+    title: '上下游分析',
+    description: '分析企业供应链关系、合作伙伴、网络密度。',
+    category: 'analysis',
     prompt: '请对以下问题进行供应链深度分析，重点关注：1）企业上下游关系 2）合作伙伴分析 3）供应链网络密度 4）关键节点识别',
-    hoverContent: `
-      <div class="p-3 text-xs">
-        <h4 class="font-semibold mb-1.5 text-sm">分析目的：</h4>
-        <p class="mb-2.5 text-slate-600">提供8个标准化分析维度，支撑企业上下游分析、供应链溯源、行业洞察等关键需求，帮助客户快速理解供应链网络结构、货物流向、关键节点、效率成本及趋势风险。</p>
-        <h4 class="font-semibold mb-1.5 text-sm">8个分析维度：</h4>
-        <ul class="list-disc pl-4 space-y-0.5 text-slate-600">
-          <li>企业流量维度 - 量化企业物流活动规模，识别核心物流节点</li>
-          <li>供应链溯源维度 - 追溯货物来源和去向，构建供应链网络</li>
-          <li>行业特征维度 - 分析不同行业的供应链特征和差异</li>
-          <li>龙头识别维度 - 识别行业内的关键企业和市场领导者</li>
-          <li>距离集中度维度 - 量化供应链的空间效率和市场结构</li>
-          <li>装卸效率维度 - 评估供应链节点的操作效率</li>
-          <li>成本效益维度 - 量化供应链的运输成本和效益</li>
-          <li>趋势预测维度 - 分析供应链的时间动态和未来趋势</li>
-        </ul>
-      </div>
-    `
+    hasPermission: false // 无权限示例
+  },
+  {
+    id: 'cargo-flow',
+    icon: '🗺️',
+    title: '货物流向分析',
+    description: '分析区域间货物流动特征、热门线路、流向分布。',
+    category: 'analysis',
+    prompt: '请对以下问题进行货物流向深度分析，重点关注：1）主要流向分布 2）热门运输线路 3）区域间货物流动特征 4）货类构成分析',
+    hasPermission: true
+  },
+  {
+    id: 'placeholder',
+    icon: '⬜',
+    title: '占位模板',
+    description: '预留模板位置，用于后续扩展。',
+    category: 'analysis',
+    hasPermission: true
+  },
+  // 数据下载
+  {
+    id: 'new-vehicle',
+    icon: '📥',
+    title: '新增车辆统计',
+    description: '下载新增车辆统计数据。',
+    category: 'download',
+    hasPermission: true
+  },
+  {
+    id: 'retention',
+    icon: '📥',
+    title: '保有量统计',
+    description: '下载车辆保有量统计数据。',
+    category: 'download',
+    hasPermission: true
+  },
+  {
+    id: 'migration',
+    icon: '📥',
+    title: '迁出统计',
+    description: '下载车辆迁出统计数据。',
+    category: 'download',
+    hasPermission: true
+  },
+  // 其他工具
+  {
+    id: 'decrypt-enterprise',
+    icon: '🔓',
+    title: '企业名称解密',
+    description: '解密企业名称信息。',
+    category: 'decrypt',
+    hasPermission: true
   },
 ];
+
+// 分类配置
+const CATEGORY_CONFIG: { [key in CapabilityCategory]: { name: string; hasPermission: boolean } } = {
+  analysis: { name: '分析模板', hasPermission: true },
+  download: { name: '数据下载', hasPermission: true },
+  decrypt: { name: '其他', hasPermission: true }, // 可根据权限控制
+};
 
 // 需求确认专家（第一阶段）
 const REQUIREMENT_EXPERT: Expert = {
@@ -370,17 +348,13 @@ export function SmartQueryAgent() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
 
-  // 自定义模板状态
-  const [customTemplates, setCustomTemplates] = useState<CustomTemplate[]>(() => {
-    const saved = localStorage.getItem(CUSTOM_TEMPLATES_KEY);
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [showCustomTemplateDialog, setShowCustomTemplateDialog] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<CustomTemplate | null>(null);
-  const [customTemplateForm, setCustomTemplateForm] = useState({
-    title: '',
-    description: '',
-  });
+
+
+  // 能力选择弹窗状态
+  const [activeCategory, setActiveCategory] = useState<CapabilityCategory>('analysis');
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // 加载状态
   const [isLoading, setIsLoading] = useState(false);
@@ -1064,92 +1038,6 @@ export function SmartQueryAgent() {
       setActiveRightTab('preview');
       setShowRightPanel(true);
       setIsSidebarCollapsed(true);
-    }
-  };
-
-  // 选择模板
-  const handleSelectTemplate = (template: AnalysisTemplate) => {
-    setSelectedTemplate(template);
-    setShowTemplateDialog(false);
-  };
-
-  // 选择自定义模板
-  const handleSelectCustomTemplate = (template: CustomTemplate) => {
-    setInput(`【使用自定义模板：${template.title}】\n\n${template.description}\n\n请基于以上分析框架进行深度分析：`);
-    setShowTemplateDialog(false);
-  };
-
-  // 保存自定义模板到localStorage
-  const saveCustomTemplates = (templates: CustomTemplate[]) => {
-    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
-    setCustomTemplates(templates);
-  };
-
-  // 打开新建模板弹窗
-  const handleOpenNewTemplate = () => {
-    setEditingTemplate(null);
-    setCustomTemplateForm({
-      title: '',
-      description: '【分析目的】\n\n\n【分析维度】\n\n',
-    });
-    setShowCustomTemplateDialog(true);
-  };
-
-  // 打开编辑模板弹窗
-  const handleOpenEditTemplate = (template: CustomTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingTemplate(template);
-    setCustomTemplateForm({
-      title: template.title,
-      description: template.description,
-    });
-    setShowCustomTemplateDialog(true);
-  };
-
-  // 保存自定义模板
-  const handleSaveCustomTemplate = () => {
-    if (!customTemplateForm.title.trim()) {
-      alert('请输入模板标题');
-      return;
-    }
-    if (!customTemplateForm.description.trim()) {
-      alert('请输入维度说明');
-      return;
-    }
-    if (customTemplateForm.description.length > 1000) {
-      alert('维度说明不能超过1000字');
-      return;
-    }
-
-    const now = Date.now();
-    if (editingTemplate) {
-      // 编辑模式
-      const updated = customTemplates.map(t =>
-        t.id === editingTemplate.id
-          ? { ...t, title: customTemplateForm.title, description: customTemplateForm.description, updatedAt: now }
-          : t
-      );
-      saveCustomTemplates(updated);
-    } else {
-      // 新建模式
-      const newTemplate: CustomTemplate = {
-        id: now.toString(),
-        title: customTemplateForm.title,
-        description: customTemplateForm.description,
-        createdAt: now,
-        updatedAt: now,
-      };
-      saveCustomTemplates([newTemplate, ...customTemplates]);
-    }
-    setShowCustomTemplateDialog(false);
-  };
-
-  // 删除自定义模板
-  const handleDeleteCustomTemplate = (templateId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('确定要删除这个自定义模板吗？')) {
-      const filtered = customTemplates.filter(t => t.id !== templateId);
-      saveCustomTemplates(filtered);
     }
   };
 
@@ -1933,211 +1821,272 @@ export function SmartQueryAgent() {
         </DialogContent>
       </Dialog>
 
-      {/* 模板选择弹窗 */}
-      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle>选择分析模板</DialogTitle>
-            <Button
-              onClick={handleOpenNewTemplate}
-              size="sm"
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              新建模板
-            </Button>
-          </DialogHeader>
-          
-          {/* 固定模板区域 */}
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-slate-500 mb-3">系统模板</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {ANALYSIS_TEMPLATES.map((template) => (
-                <MouseFollowTooltip key={template.id} content={template.hoverContent}>
+      {/* 能力选择弹窗 - 新设计 */}
+      <Dialog 
+        open={showTemplateDialog} 
+        onOpenChange={(open) => {
+          // 点击遮罩不关闭，只能通过选择模板或按ESC关闭
+          if (open) setShowTemplateDialog(true);
+        }}
+      >
+        <DialogContent 
+          className="p-0 overflow-hidden border-0"
+          style={{ 
+            width: '1000px', 
+            height: '700px', 
+            maxWidth: '1000px',
+            maxHeight: '700px'
+          }}
+        >
+          {/* 顶部标题栏 */}
+          <div className="h-14 bg-white border-b border-[#E5E7EB] flex items-center justify-between px-5">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-semibold text-[#1F2937]">大卡鹰眼 · 数据工坊</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                className="w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                title="帮助"
+              >
+                <span className="text-lg">?</span>
+              </button>
+              <button 
+                onClick={() => setShowTemplateDialog(false)}
+                className="w-8 h-8 flex items-center justify-center text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                title="关闭"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* 主体内容区 */}
+          <div className="flex" style={{ height: 'calc(700px - 56px - 48px)' }}>
+            {/* 左侧分类栏 */}
+            <div className="w-[200px] bg-[#F5F6F7] flex flex-col py-2">
+              {(Object.keys(CATEGORY_CONFIG) as CapabilityCategory[])
+                .filter(cat => CATEGORY_CONFIG[cat].hasPermission)
+                .map((category) => (
                   <button
-                    onClick={() => handleSelectTemplate(template)}
-                    className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-left group w-full"
+                    key={category}
+                    onClick={() => {
+                      setActiveCategory(category);
+                      setTemplateSearchQuery('');
+                    }}
+                    className={`relative h-12 px-4 text-left text-sm font-medium transition-all ${
+                      activeCategory === category
+                        ? 'text-[#2563EB] bg-[#EEF2FF]'
+                        : 'text-[#374151] hover:bg-[#E5E7EB]'
+                    }`}
                   >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white">
-                        {template.icon}
-                      </div>
-                      <span className="font-medium text-slate-700 group-hover:text-purple-700">
-                        {template.name}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500">{template.description}</p>
+                    {/* 选中态左侧竖线 */}
+                    {activeCategory === category && (
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#2563EB]" />
+                    )}
+                    {CATEGORY_CONFIG[category].name}
                   </button>
-                </MouseFollowTooltip>
-              ))}
+                ))}
             </div>
-          </div>
 
-          {/* 自定义模板区域 */}
-          {customTemplates.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-slate-500 mb-3">
-                自定义模板 ({customTemplates.length}个)
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {customTemplates.map((template) => {
-                  // 生成自定义模板的hoverContent
-                  const customHoverContent = `
-                    <div class="p-3 text-xs">
-                      <h4 class="font-semibold mb-1.5 text-sm">${template.title}</h4>
-                      <div class="text-slate-600 whitespace-pre-wrap">${template.description.replace(/\n/g, '<br/>')}</div>
-                      <div class="mt-2 text-xs text-slate-400">
-                        创建时间：${new Date(template.createdAt).toLocaleString()}<br/>
-                        更新时间：${new Date(template.updatedAt).toLocaleString()}
-                      </div>
-                    </div>
-                  `;
-                  return (
-                    <MouseFollowTooltip key={template.id} content={customHoverContent}>
-                      <div
-                        className="relative p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all group cursor-pointer"
-                        onClick={() => handleSelectCustomTemplate(template)}
-                      >
-                        <div className="w-full text-left">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white">
-                              <FileText className="w-5 h-5" />
+            {/* 右侧内容区 */}
+            <div className="flex-1 bg-white p-5 overflow-y-auto">
+              {/* 标题 - 根据分类显示不同标题 */}
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-[#1F2937]">
+                  {activeCategory === 'analysis' && '请选择模板，填写条件，开启深度分析'}
+                  {activeCategory === 'download' && '请选择模板，填写条件，进行数据下载'}
+                  {activeCategory === 'decrypt' && '请选择工具，根据提示进行使用'}
+                </h2>
+              </div>
+              
+              {/* 系统模板标题 - 仅分析模板显示 */}
+              {activeCategory === 'analysis' && (
+                <div className="mb-3">
+                  <span className="text-sm text-[#6B7280]">系统模板</span>
+                </div>
+              )}
+
+              {/* 数据下载提示条 */}
+              {activeCategory === 'download' && (
+                <div className="mb-4 bg-[#FFF3CD] border border-[#FFE69C] rounded px-4 py-3 flex items-start gap-2">
+                  <span className="text-[#856404] text-sm">ℹ️</span>
+                  <p className="text-sm text-[#856404]">
+                    提示：单次下载最大支持 1GB 文件，超出限制请缩小时间范围或筛选条件
+                  </p>
+                </div>
+              )}
+
+              {/* 模板卡片网格 - 两列布局 */}
+              <div className="grid grid-cols-2 gap-3">
+                {CAPABILITY_CARDS
+                  .filter(card => card.category === activeCategory)
+                  .filter(card => 
+                    templateSearchQuery === '' || 
+                    card.title.toLowerCase().includes(templateSearchQuery.toLowerCase())
+                  )
+                  .map((card) => (
+                    <div
+                      key={card.id}
+                      className="relative"
+                    >
+                      {card.hasPermission !== false ? (
+                        /* 有权限 - 正常卡片 */
+                        <>
+                          <button
+                            onClick={() => {
+                              if (card.category === 'analysis' && card.prompt) {
+                                setInput(`【使用分析模板：${card.title}】\n\n${card.prompt}\n\n请描述您的分析需求：`);
+                              } else if (card.category === 'download') {
+                                // 触发CSV下载
+                                const userMessageId = Date.now().toString();
+                                const userMessage: Message = {
+                                  id: userMessageId,
+                                  type: 'user',
+                                  content: `下载${card.title}`,
+                                  timestamp: new Date(),
+                                };
+                                const botMessageId = (Date.now() + 1).toString();
+                                const botMessage: Message = {
+                                  id: botMessageId,
+                                  type: 'bot',
+                                  content: `已收到您的数据下载请求，正在为您准备「${card.title}」的CSV文件，请稍候...`,
+                                  timestamp: new Date(),
+                                };
+                                setSessions(prev => prev.map(session => {
+                                  if (session.id === currentSessionId) {
+                                    return {
+                                      ...session,
+                                      messages: [...session.messages, userMessage, botMessage],
+                                      updatedAt: new Date(),
+                                    };
+                                  }
+                                  return session;
+                                }));
+                                setTimeout(() => {
+                                  startCsvDownloadTask(botMessageId, card.title);
+                                }, 500);
+                              }
+                              setShowTemplateDialog(false);
+                            }}
+                            className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-4 flex items-center gap-4 transition-all hover:border-[#8B5CF6] hover:shadow-md cursor-pointer group"
+                            onMouseEnter={(e) => {
+                              setHoveredCard(card.id);
+                              setMousePosition({ x: e.clientX, y: e.clientY });
+                            }}
+                            onMouseMove={(e) => setMousePosition({ x: e.clientX, y: e.clientY })}
+                            onMouseLeave={() => setHoveredCard(null)}
+                          >
+                            {/* 左侧紫色图标 */}
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-6 h-6 text-white" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="font-medium text-slate-700 group-hover:text-blue-700 block truncate">
-                                {template.title}
-                              </span>
-                              <span className="text-xs text-slate-400">
-                                {new Date(template.updatedAt).toLocaleDateString()} 更新
-                              </span>
+                            {/* 右侧标题 */}
+                            <span className="text-[15px] font-medium text-[#1F2937] group-hover:text-[#8B5CF6] transition-colors">
+                              {card.title}
+                            </span>
+                          </button>
+
+                          {/* Hover 详情浮窗 */}
+                          {hoveredCard === card.id && createPortal(
+                            <div
+                              className="fixed z-[2147483647] bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] p-5 pointer-events-none max-w-sm"
+                              style={{
+                                left: `${Math.min(mousePosition.x + 20, window.innerWidth - 340)}px`,
+                                top: `${Math.min(mousePosition.y - 50, window.innerHeight - 300)}px`,
+                              }}
+                            >
+                              <div className="space-y-3">
+                                <div>
+                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-1">分析目的</h4>
+                                  <p className="text-xs text-[#6B7280]">{card.title}</p>
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-1">分析维度</h4>
+                                  <p className="text-xs text-[#6B7280]">{card.title}</p>
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-1">模板介绍</h4>
+                                  <p className="text-xs text-[#6B7280] leading-relaxed">{card.description}</p>
+                                </div>
+                                <div>
+                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-1">条件</h4>
+                                  <p className="text-xs text-[#6B7280]">选择模板后填写分析条件</p>
+                                </div>
+                              </div>
+                            </div>,
+                            document.body
+                          )}
+                        </>
+                      ) : (
+                        /* 无权限 - 置灰卡片 */
+                        <div className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-4 flex flex-col opacity-40 cursor-not-allowed">
+                          <div className="flex items-center gap-4">
+                            {/* 左侧灰色图标 */}
+                            <div className="w-12 h-12 rounded-xl bg-[#999999] flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-6 h-6 text-white" />
                             </div>
+                            {/* 右侧标题 */}
+                            <span className="text-[15px] font-medium text-[#999999]">
+                              {card.title}
+                            </span>
                           </div>
-                          <p className="text-xs text-slate-500 line-clamp-2">
-                            {template.description.replace(/【.*?】/g, '').substring(0, 60)}...
-                          </p>
+                          {/* 无权限提示 */}
+                          <div className="mt-3 pt-3 border-t border-[#E5E7EB]">
+                            <p className="text-xs text-[#FF6B6B] mb-1">暂无权限，请联系管理员开通</p>
+                            <p className="text-xs text-[#999999]">如需使用此模板，请确认已采购相关数据权限</p>
+                          </div>
                         </div>
-                        {/* 编辑和删除按钮 */}
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => handleOpenEditTemplate(template, e)}
-                            className="p-1.5 bg-white hover:bg-blue-50 rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600 transition-all"
-                            title="编辑"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteCustomTemplate(template.id, e)}
-                            className="p-1.5 bg-white hover:bg-red-50 rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-red-600 transition-all"
-                            title="删除"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </MouseFollowTooltip>
-                  );
-                })}
+                      )}
+                    </div>
+                  ))}
               </div>
-            </div>
-          )}
 
-          {/* 空状态提示 */}
-          {customTemplates.length === 0 && (
-            <div className="mt-6 p-8 text-center border border-dashed border-slate-200 rounded-xl">
-              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">暂无自定义模板</p>
-              <p className="text-xs text-slate-400 mt-1">点击右上角"新建模板"创建您的第一个模板</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 自定义模板编辑弹窗 */}
-      <Dialog open={showCustomTemplateDialog} onOpenChange={setShowCustomTemplateDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingTemplate ? '编辑自定义模板' : '新建自定义模板'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 mt-4">
-            {/* 标题输入 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                模板标题 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                value={customTemplateForm.title}
-                onChange={(e) => setCustomTemplateForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="请输入模板标题，如：煤炭运输分析"
-                maxLength={50}
-                className="border-slate-200 focus:border-purple-400"
-              />
-              <div className="text-xs text-slate-400 text-right">
-                {customTemplateForm.title.length}/50
-              </div>
-            </div>
-
-            {/* 维度说明输入 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                维度说明 <span className="text-red-500">*</span>
-                <span className="text-xs font-normal text-slate-400 ml-2">最多1000字</span>
-              </label>
-              <div className="relative">
-                <textarea
-                  value={customTemplateForm.description}
-                  onChange={(e) => setCustomTemplateForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="【分析目的】&#10;&#10;请描述分析的目的...&#10;&#10;【分析维度】&#10;&#10;请列出分析的维度..."
-                  maxLength={1000}
-                  rows={12}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400/20 focus:border-purple-400 resize-none font-mono text-sm leading-relaxed"
-                />
-                {/* 格式提示 */}
-                <div className="absolute bottom-3 left-3 right-3 bg-amber-50 border border-amber-100 rounded-lg p-2 text-xs text-amber-700">
-                  <span className="font-medium">格式示例：</span>
-                  使用 【分析目的】和【分析维度】标签组织内容，支持多维度列举
+              {/* 无搜索结果 */}
+              {templateSearchQuery && CAPABILITY_CARDS
+                .filter(card => card.category === activeCategory)
+                .filter(card => 
+                  card.title.toLowerCase().includes(templateSearchQuery.toLowerCase())
+                ).length === 0 && (
+                <div className="flex flex-col items-center justify-center h-48 text-center">
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-sm text-[#6B7280]">未找到匹配模板</p>
+                  <p className="text-xs text-[#9CA3AF] mt-1">请尝试其他关键词</p>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className={`text-xs ${customTemplateForm.description.length > 900 ? 'text-amber-600' : 'text-slate-400'}`}>
-                  {customTemplateForm.description.length}/1000 字
-                </span>
-                {customTemplateForm.description.length > 1000 && (
-                  <span className="text-xs text-red-500">已超出字数限制</span>
-                )}
-              </div>
-            </div>
+              )}
 
-            {/* 预览区域 */}
-            {customTemplateForm.description && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">预览效果</label>
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="text-sm text-slate-600 whitespace-pre-wrap">
-                    {customTemplateForm.description}
-                  </div>
+              {/* 空分类 */}
+              {!templateSearchQuery && CAPABILITY_CARDS.filter(card => card.category === activeCategory).length === 0 && (
+                <div className="flex flex-col items-center justify-center h-48 text-center">
+                  <div className="text-4xl mb-3">📭</div>
+                  <p className="text-sm text-[#6B7280]">暂无模板</p>
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
+
+          {/* 底部搜索栏 */}
+          <div className="h-12 bg-white border-t border-[#E5E7EB] flex items-center px-4">
+            <Search className="w-4 h-4 text-[#9CA3AF] mr-3" />
+            <input
+              type="text"
+              value={templateSearchQuery}
+              onChange={(e) => setTemplateSearchQuery(e.target.value)}
+              placeholder="搜索模板..."
+              className="flex-1 text-sm text-[#374151] placeholder-[#9CA3AF] outline-none"
+            />
+            {templateSearchQuery && (
+              <button
+                onClick={() => setTemplateSearchQuery('')}
+                className="ml-2 text-[#9CA3AF] hover:text-[#6B7280]"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
-
-            {/* 操作按钮 */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <Button
-                variant="outline"
-                onClick={() => setShowCustomTemplateDialog(false)}
-              >
-                取消
-              </Button>
-              <Button
-                onClick={handleSaveCustomTemplate}
-                disabled={!customTemplateForm.title.trim() || !customTemplateForm.description.trim() || customTemplateForm.description.length > 1000}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-              >
-                {editingTemplate ? '保存修改' : '创建模板'}
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 }
