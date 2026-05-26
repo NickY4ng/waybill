@@ -23,9 +23,9 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     cid: 'CID001',
     customerName: '诚实实业集团',
     phone: '138****8001',
-    fileName: '运单数据_20250410_143022.csv',
+    fileName: '运单数据_20260510_143022.csv',
     template: '新增车辆统计',
-    downloadTime: '2025-04-10 14:30:22',
+    downloadTime: '2026-05-10 14:30:22',
   },
   {
     id: '2',
@@ -33,9 +33,9 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     cid: 'CID002',
     customerName: '北京物流公司',
     phone: '139****8002',
-    fileName: '北京到河北运单_20250409_100515.csv',
+    fileName: '北京到河北运单_20260509_100515.csv',
     template: '保有量统计',
-    downloadTime: '2025-04-09 10:05:15',
+    downloadTime: '2026-05-09 10:05:15',
   },
   {
     id: '3',
@@ -43,9 +43,9 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     cid: 'CID003',
     customerName: '上海运输公司',
     phone: '136****8003',
-    fileName: '煤炭运输数据_20250408_163022.csv',
+    fileName: '煤炭运输数据_20260508_163022.csv',
     template: '迁出统计',
-    downloadTime: '2025-04-08 16:30:22',
+    downloadTime: '2026-05-08 16:30:22',
   },
   {
     id: '4',
@@ -53,9 +53,9 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     cid: 'CID001',
     customerName: '诚实实业集团',
     phone: '138****8001',
-    fileName: '2024年10月数据_20250407_093022.csv',
+    fileName: '2024年10月数据_20260507_093022.csv',
     template: '新增车辆统计',
-    downloadTime: '2025-04-07 09:30:22',
+    downloadTime: '2026-05-07 09:30:22',
   },
   {
     id: '5',
@@ -63,15 +63,15 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     cid: 'CID004',
     customerName: '广州货运公司',
     phone: '135****8004',
-    fileName: '运单数据_20250406_113022.csv',
+    fileName: '运单数据_20260506_113022.csv',
     template: '保有量统计',
-    downloadTime: '2025-04-06 11:30:22',
+    downloadTime: '2026-05-06 11:30:22',
   },
 ];
 
 export function DataDownload() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('2025-04');
+  const [selectedMonth, setSelectedMonth] = useState('2026-05');
   const [downloadData] = useState<DownloadRecord[]>(MOCK_DOWNLOAD_RECORDS);
 
   // 筛选数据
@@ -79,8 +79,7 @@ export function DataDownload() {
     const matchesSearch =
       !searchQuery ||
       record.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.phone.includes(searchQuery) ||
-      record.accountId.toLowerCase().includes(searchQuery.toLowerCase());
+      record.phone.includes(searchQuery);
     const matchesMonth = record.downloadTime.startsWith(selectedMonth);
     return matchesSearch && matchesMonth;
   });
@@ -173,7 +172,7 @@ export function DataDownload() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="搜索客户名称、手机号、账号ID..."
+                placeholder="搜索客户名称或手机号..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -186,10 +185,11 @@ export function DataDownload() {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="2025-04">2025年4月</option>
-                <option value="2025-03">2025年3月</option>
-                <option value="2025-02">2025年2月</option>
-                <option value="2025-01">2025年1月</option>
+                <option value="2026-05">2026年5月</option>
+                <option value="2026-04">2026年4月</option>
+                <option value="2026-03">2026年3月</option>
+                <option value="2026-02">2026年2月</option>
+                <option value="2026-01">2026年1月</option>
               </select>
             </div>
             <div className="flex-1" />
