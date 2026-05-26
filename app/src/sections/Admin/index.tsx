@@ -3,10 +3,11 @@ import { AdminLogin } from './AdminLogin';
 import { AdminLayout } from './AdminLayout';
 import { AccountManagement } from './AccountManagement';
 import { UsageStatistics } from './UsageStatistics';
+import { DataDownload } from './DataDownload';
 
 export function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'accounts' | 'usage'>('accounts');
+  const [activeTab, setActiveTab] = useState<'accounts' | 'usage' | 'download'>('accounts');
 
   // 检查是否已登录
   useEffect(() => {
@@ -38,6 +39,7 @@ export function AdminPanel() {
     >
       {activeTab === 'accounts' && <AccountManagement />}
       {activeTab === 'usage' && <UsageStatistics />}
+      {activeTab === 'download' && <DataDownload />}
     </AdminLayout>
   );
 }
