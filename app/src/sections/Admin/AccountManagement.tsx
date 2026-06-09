@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Key, Settings, CheckCircle, XCircle, Eye, EyeOff, Mail, RefreshCw, Loader2 } from 'lucide-react';
+import { Search, Plus, Key, Settings, CheckCircle, XCircle, Eye, EyeOff, Mail } from 'lucide-react';
 
 // SQL验证函数
 function validateSql(sql: string): { valid: boolean; message: string } {
@@ -76,29 +76,29 @@ interface EmailLog {
 
 const MOCK_EMAIL_LOGS: EmailLog[] = [
   { id: 'e1', accountId: '1', type: '账号开通邮件', sendTime: '2025-06-01 09:30:15', status: '发送成功' },
-  { id: 'e2', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-03 14:22:08', status: '发送失败' },
+  { id: 'e2', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-03 14:22:08', status: '发送成功' },
   { id: 'e3', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-06-05 10:00:00', status: '发送成功' },
   { id: 'e4', accountId: '1', type: '账号到期邮件', sendTime: '2025-05-20 08:15:30', status: '发送成功' },
-  { id: 'e5', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-07 16:45:22', status: '发送失败' },
+  { id: 'e5', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-07 16:45:22', status: '发送成功' },
   { id: 'e6', accountId: '1', type: '账号开通邮件', sendTime: '2025-04-10 11:20:00', status: '发送成功' },
   { id: 'e7', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-04-15 09:00:00', status: '发送成功' },
-  { id: 'e8', accountId: '1', type: '账号到期邮件', sendTime: '2025-03-01 13:10:45', status: '发送失败' },
+  { id: 'e8', accountId: '1', type: '账号到期邮件', sendTime: '2025-03-01 13:10:45', status: '发送成功' },
   { id: 'e9', accountId: '1', type: '账号重置邮件', sendTime: '2025-04-02 15:30:00', status: '发送成功' },
   { id: 'e10', accountId: '1', type: '账号开通邮件', sendTime: '2025-02-15 10:00:00', status: '发送成功' },
-  { id: 'e11', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-05-28 08:45:00', status: '发送失败' },
+  { id: 'e11', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-05-28 08:45:00', status: '发送成功' },
   { id: 'e12', accountId: '1', type: '账号到期邮件', sendTime: '2025-01-20 14:00:00', status: '发送成功' },
   { id: 'e13', accountId: '2', type: '账号开通邮件', sendTime: '2025-05-15 09:00:00', status: '发送成功' },
-  { id: 'e14', accountId: '2', type: '账号重置邮件', sendTime: '2025-06-02 11:30:00', status: '发送失败' },
+  { id: 'e14', accountId: '2', type: '账号重置邮件', sendTime: '2025-06-02 11:30:00', status: '发送成功' },
   { id: 'e15', accountId: '2', type: '账号即将到期邮件', sendTime: '2025-06-08 10:00:00', status: '发送成功' },
   { id: 'e16', accountId: '3', type: '账号开通邮件', sendTime: '2025-03-10 09:00:00', status: '发送成功' },
-  { id: 'e17', accountId: '3', type: '账号到期邮件', sendTime: '2025-06-01 08:00:00', status: '发送失败' },
+  { id: 'e17', accountId: '3', type: '账号到期邮件', sendTime: '2025-06-01 08:00:00', status: '发送成功' },
   { id: 'e18', accountId: '4', type: '账号开通邮件', sendTime: '2024-01-20 10:00:00', status: '发送成功' },
-  { id: 'e19', accountId: '4', type: '账号到期邮件', sendTime: '2025-03-31 08:00:00', status: '发送失败' },
+  { id: 'e19', accountId: '4', type: '账号到期邮件', sendTime: '2025-03-31 08:00:00', status: '发送成功' },
   { id: 'e20', accountId: '4', type: '账号重置邮件', sendTime: '2025-02-15 14:30:00', status: '发送成功' },
   { id: 'e21', accountId: '5', type: '账号开通邮件', sendTime: '2025-01-01 09:00:00', status: '发送成功' },
-  { id: 'e22', accountId: '5', type: '账号到期邮件', sendTime: '2025-04-15 10:00:00', status: '发送失败' },
+  { id: 'e22', accountId: '5', type: '账号到期邮件', sendTime: '2025-04-15 10:00:00', status: '发送成功' },
   { id: 'e23', accountId: '6', type: '账号开通邮件', sendTime: '2025-02-01 09:00:00', status: '发送成功' },
-  { id: 'e24', accountId: '6', type: '账号即将到期邮件', sendTime: '2025-06-01 10:00:00', status: '发送失败' },
+  { id: 'e24', accountId: '6', type: '账号即将到期邮件', sendTime: '2025-06-01 10:00:00', status: '发送成功' },
   { id: 'e25', accountId: '6', type: '账号重置邮件', sendTime: '2025-05-20 16:00:00', status: '发送成功' },
 ];
 
@@ -197,11 +197,10 @@ export function AccountManagement() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [decryptedPhones, setDecryptedPhones] = useState<Set<string>>(new Set());
-  const [emailLogs, setEmailLogs] = useState<EmailLog[]>(MOCK_EMAIL_LOGS);
+  const [emailLogs] = useState<EmailLog[]>(MOCK_EMAIL_LOGS);
   const [isEmailLogDialogOpen, setIsEmailLogDialogOpen] = useState(false);
   const [emailLogAccount, setEmailLogAccount] = useState<Account | null>(null);
   const [emailLogPage, setEmailLogPage] = useState(1);
-  const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const pageSize = 10;
   
   // 新建账号表单
@@ -398,23 +397,6 @@ export function AccountManagement() {
     setEmailLogAccount(account);
     setEmailLogPage(1);
     setIsEmailLogDialogOpen(true);
-  };
-
-  const handleResendEmail = async (log: EmailLog) => {
-    setResendingIds(prev => new Set(prev).add(log.id));
-
-    // 模拟发送：随机 1.5~3 秒延迟，70% 成功率
-    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500));
-    const success = Math.random() < 0.7;
-
-    setEmailLogs(prev => prev.map(item =>
-      item.id === log.id ? { ...item, status: success ? '发送成功' as EmailStatus : '发送失败' as EmailStatus } : item
-    ));
-    setResendingIds(prev => {
-      const next = new Set(prev);
-      next.delete(log.id);
-      return next;
-    });
   };
 
   const getEmailTypeBadge = (type: EmailType) => {
@@ -772,13 +754,12 @@ export function AccountManagement() {
                         <TableHead>邮件类型</TableHead>
                         <TableHead>发送时间</TableHead>
                         <TableHead>发送状态</TableHead>
-                        <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {pagedLogs.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-slate-400 py-8">
+                          <TableCell colSpan={3} className="text-center text-slate-400 py-8">
                             暂无邮件发送记录
                           </TableCell>
                         </TableRow>
@@ -795,31 +776,6 @@ export function AccountManagement() {
                               }`}>
                                 {log.status}
                               </span>
-                            </TableCell>
-                            <TableCell>
-                              {log.status === '发送失败' && (
-                                resendingIds.has(log.id) ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled
-                                    className="text-slate-400"
-                                  >
-                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                    发送中...
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleResendEmail(log)}
-                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                  >
-                                    <RefreshCw className="w-4 h-4 mr-1" />
-                                    重新发送
-                                  </Button>
-                                )
-                              )}
                             </TableCell>
                           </TableRow>
                         ))
