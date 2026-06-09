@@ -3,28 +3,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Download, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Search, Download, Calendar, Eye, EyeOff, FileText } from 'lucide-react';
 
-interface DownloadRecord {
+type TemplateCategory = '数据分析' | '数据下载' | '其他';
+
+interface TemplateUsageRecord {
   id: string;
   accountId: string;
   cid: string;
   customerName: string;
   phone: string;
-  fileName: string;
   template: string;
-  downloadTime: string;
+  category: TemplateCategory;
+  useTime: string;
+  fileName?: string;
+  downloadTime?: string;
 }
 
-const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
+const MOCK_RECORDS: TemplateUsageRecord[] = [
   {
     id: '1',
     accountId: 'ACC001',
     cid: 'CID001',
     customerName: '诚实实业集团',
-    phone: '138****8001',
-    fileName: '运单数据_20260510_143022.csv',
+    phone: '13800138001',
     template: '新增车辆统计',
+    category: '数据分析',
+    useTime: '2026-05-10 14:20:00',
+    fileName: '运单数据_20260510_143022.csv',
     downloadTime: '2026-05-10 14:30:22',
   },
   {
@@ -32,9 +38,11 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     accountId: 'ACC002',
     cid: 'CID002',
     customerName: '北京物流公司',
-    phone: '139****8002',
-    fileName: '北京到河北运单_20260509_100515.csv',
+    phone: '13900139002',
     template: '保有量统计',
+    category: '数据分析',
+    useTime: '2026-05-09 09:50:00',
+    fileName: '北京到河北运单_20260509_100515.csv',
     downloadTime: '2026-05-09 10:05:15',
   },
   {
@@ -42,9 +50,11 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     accountId: 'ACC003',
     cid: 'CID003',
     customerName: '上海运输公司',
-    phone: '136****8003',
-    fileName: '煤炭运输数据_20260508_163022.csv',
+    phone: '13600136003',
     template: '迁出统计',
+    category: '数据分析',
+    useTime: '2026-05-08 16:00:00',
+    fileName: '煤炭运输数据_20260508_163022.csv',
     downloadTime: '2026-05-08 16:30:22',
   },
   {
@@ -52,9 +62,11 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     accountId: 'ACC001',
     cid: 'CID001',
     customerName: '诚实实业集团',
-    phone: '138****8001',
+    phone: '13800138001',
+    template: '全国货物流向',
+    category: '数据下载',
+    useTime: '2026-05-07 09:00:00',
     fileName: '2024年10月数据_20260507_093022.csv',
-    template: '新增车辆统计',
     downloadTime: '2026-05-07 09:30:22',
   },
   {
@@ -62,97 +74,176 @@ const MOCK_DOWNLOAD_RECORDS: DownloadRecord[] = [
     accountId: 'ACC004',
     cid: 'CID004',
     customerName: '广州货运公司',
-    phone: '135****8004',
+    phone: '13500135004',
+    template: '运单数据导出',
+    category: '数据下载',
+    useTime: '2026-05-06 11:00:00',
     fileName: '运单数据_20260506_113022.csv',
-    template: '保有量统计',
     downloadTime: '2026-05-06 11:30:22',
+  },
+  {
+    id: '6',
+    accountId: 'ACC005',
+    cid: 'CID005',
+    customerName: '深圳供应链公司',
+    phone: '13700137005',
+    template: '运输效率分析',
+    category: '数据分析',
+    useTime: '2026-05-05 15:30:00',
+    // 使用了模板但未触发下载
+  },
+  {
+    id: '7',
+    accountId: 'ACC002',
+    cid: 'CID002',
+    customerName: '北京物流公司',
+    phone: '13900139002',
+    template: '客户对账清单',
+    category: '其他',
+    useTime: '2026-05-04 08:45:00',
+    // 仅查看，未下载
+  },
+  {
+    id: '8',
+    accountId: 'ACC006',
+    cid: 'CID006',
+    customerName: '天津港口物流',
+    phone: '13800138006',
+    template: '货物类型分布',
+    category: '数据分析',
+    useTime: '2026-05-03 10:20:00',
+    fileName: '货物类型统计_20260503_145022.csv',
+    downloadTime: '2026-05-03 14:50:22',
+  },
+  {
+    id: '9',
+    accountId: 'ACC003',
+    cid: 'CID003',
+    customerName: '上海运输公司',
+    phone: '13600136003',
+    template: '月度运费报表',
+    category: '其他',
+    useTime: '2026-05-02 13:00:00',
+    // 仅在线查看，未导出
+  },
+  {
+    id: '10',
+    accountId: 'ACC007',
+    cid: 'CID007',
+    customerName: '重庆西部物流',
+    phone: '13500135007',
+    template: '路线优化建议',
+    category: '数据分析',
+    useTime: '2026-05-01 09:30:00',
+  },
+  {
+    id: '11',
+    accountId: 'ACC001',
+    cid: 'CID001',
+    customerName: '诚实实业集团',
+    phone: '13800138001',
+    template: '线路热力分析',
+    category: '数据分析',
+    useTime: '2026-04-28 14:00:00',
+    fileName: '线路热力_20260428_160022.csv',
+    downloadTime: '2026-04-28 16:00:22',
+  },
+  {
+    id: '12',
+    accountId: 'ACC008',
+    cid: 'CID008',
+    customerName: '杭州电商物流',
+    phone: '13900139008',
+    template: '发货量统计',
+    category: '数据下载',
+    useTime: '2026-04-25 10:15:00',
   },
 ];
 
 export function DataDownload() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('2026-05');
-  const [downloadData] = useState<DownloadRecord[]>(MOCK_DOWNLOAD_RECORDS);
+  const [records] = useState<TemplateUsageRecord[]>(MOCK_RECORDS);
+  const [decryptedPhones, setDecryptedPhones] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  // 筛选数据
-  const filteredData = downloadData.filter((record) => {
+  const filteredRecords = records.filter((record) => {
     const matchesSearch =
       !searchQuery ||
       record.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.phone.includes(searchQuery);
-    const matchesMonth = record.downloadTime.startsWith(selectedMonth);
+      record.phone.includes(searchQuery) ||
+      record.template.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesMonth = record.useTime.startsWith(selectedMonth);
     return matchesSearch && matchesMonth;
   });
 
-  // 处理导出
-  const handleExport = () => {
-    const exportData = searchQuery ? filteredData : downloadData;
-    const exportInfo = searchQuery
-      ? `按搜索条件导出：${searchQuery}，共 ${exportData.length} 条记录`
-      : `导出全部数据：共 ${exportData.length} 条记录`;
-    alert(`${exportInfo}\n\n导出功能开发中，将生成Excel文件`);
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
+  const pagedRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const getCategoryBadge = (category: TemplateCategory) => {
+    const styles: Record<TemplateCategory, string> = {
+      '数据分析': 'bg-blue-100 text-blue-700',
+      '数据下载': 'bg-green-100 text-green-700',
+      '其他': 'bg-slate-100 text-slate-600',
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${styles[category]}`}>
+        {category}
+      </span>
+    );
   };
 
-  // 解密手机号
   const maskPhone = (phone: string) => {
     if (phone.length !== 11) return phone;
     return phone.slice(0, 3) + '****' + phone.slice(7);
   };
 
-  // 切换手机号显示
-  const [decryptedPhones, setDecryptedPhones] = useState<Set<string>>(new Set());
-
   const togglePhoneDecrypt = (id: string) => {
-    const newDecrypted = new Set(decryptedPhones);
-    if (newDecrypted.has(id)) {
-      newDecrypted.delete(id);
-    } else {
-      newDecrypted.add(id);
-    }
-    setDecryptedPhones(newDecrypted);
+    setDecryptedPhones(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
-  // 显示手机号
-  const displayPhone = (record: DownloadRecord) => {
-    if (decryptedPhones.has(record.id)) {
-      return record.phone;
-    }
-    return maskPhone(record.phone);
+  const displayPhone = (record: TemplateUsageRecord) => {
+    return decryptedPhones.has(record.id) ? record.phone : maskPhone(record.phone);
   };
 
   // 生成模拟CSV数据
-  const generateMockCsvData = (_record: DownloadRecord): string => {
+  const generateMockCsvData = (_record: TemplateUsageRecord): string => {
     const headers = ['运单号', '出发地', '目的地', '货物类型', '重量(吨)', '发货时间', '到达时间', '运费(元)'];
     const cities = ['北京', '上海', '广州', '深圳', '天津', '重庆', '武汉', '南京', '杭州', '成都'];
     const cargoTypes = ['电子产品', '服装', '食品', '建材', '化工', '家具', '机械设备'];
-    
+
     let csv = headers.join(',') + '\n';
     const rowCount = Math.floor(Math.random() * 50) + 10;
-    
+
     for (let i = 0; i < rowCount; i++) {
       const fromCity = cities[Math.floor(Math.random() * cities.length)];
       let toCity = cities[Math.floor(Math.random() * cities.length)];
       while (toCity === fromCity) {
         toCity = cities[Math.floor(Math.random() * cities.length)];
       }
-      
+
       const waybillNo = 'YD' + String(Date.now()).slice(-8) + String(i).padStart(4, '0');
       const cargoType = cargoTypes[Math.floor(Math.random() * cargoTypes.length)];
       const weight = (Math.random() * 30 + 1).toFixed(2);
       const startDate = new Date(2025, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1);
       const endDate = new Date(startDate.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000);
       const freight = Math.floor(Math.random() * 5000 + 500);
-      
+
       csv += `${waybillNo},${fromCity},${toCity},${cargoType},${weight},${startDate.toISOString().split('T')[0]},${endDate.toISOString().split('T')[0]},${freight}\n`;
     }
-    
+
     return csv;
   };
 
-  // 处理文件下载
-  const handleFileDownload = (record: DownloadRecord) => {
+  const handleFileDownload = (record: TemplateUsageRecord) => {
+    if (!record.fileName) return;
     const csvData = generateMockCsvData(record);
-    const blob = new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['﻿' + csvData], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -163,18 +254,28 @@ export function DataDownload() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExport = () => {
+    const exportData = searchQuery ? filteredRecords : records;
+    alert(`导出模板使用记录：共 ${exportData.length} 条\n\n导出功能开发中，将生成Excel文件`);
+  };
+
+  // 切换月份时重置分页
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="p-6 space-y-6">
-      {/* 筛选条件 */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="搜索客户名称或手机号..."
+                placeholder="搜索客户名称、手机号或模板名称"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="pl-10"
               />
             </div>
@@ -182,7 +283,7 @@ export function DataDownload() {
               <Calendar className="w-4 h-4 text-slate-400" />
               <select
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) => handleMonthChange(e.target.value)}
                 className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="2026-05">2026年5月</option>
@@ -204,24 +305,21 @@ export function DataDownload() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* 数据表格 */}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>账号ID</TableHead>
-                <TableHead>关联CID</TableHead>
                 <TableHead>客户名称</TableHead>
                 <TableHead>手机号</TableHead>
+                <TableHead>模板分类</TableHead>
+                <TableHead>模板名称</TableHead>
+                <TableHead>使用时间</TableHead>
                 <TableHead>下载文件名称</TableHead>
-                <TableHead>对应模板</TableHead>
                 <TableHead>下载时间</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((record) => (
+              {pagedRecords.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-mono text-xs">{record.accountId}</TableCell>
-                  <TableCell>{record.cid || '-'}</TableCell>
                   <TableCell>{record.customerName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -240,46 +338,68 @@ export function DataDownload() {
                       </Button>
                     </div>
                   </TableCell>
+                  <TableCell>{getCategoryBadge(record.category)}</TableCell>
+                  <TableCell className="font-medium">{record.template}</TableCell>
+                  <TableCell className="text-sm text-slate-600">{record.useTime}</TableCell>
                   <TableCell>
-                    <button
-                      onClick={() => handleFileDownload(record)}
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      {record.fileName}
-                    </button>
+                    {record.fileName ? (
+                      <button
+                        onClick={() => handleFileDownload(record)}
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        {record.fileName}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-slate-400">-</span>
+                    )}
                   </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {record.template}
-                    </span>
+                  <TableCell className="text-sm text-slate-500">
+                    {record.downloadTime || <span className="text-slate-400">-</span>}
                   </TableCell>
-                  <TableCell className="text-sm text-slate-500">{record.downloadTime}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          {/* 空状态 */}
-          {filteredData.length === 0 && (
+          {filteredRecords.length === 0 && (
             <div className="text-center py-12">
-              <Download className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">暂无下载记录</p>
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500">暂无模板使用记录</p>
             </div>
           )}
 
-          {/* 分页 */}
-          {filteredData.length > 0 && (
+          {filteredRecords.length > 0 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
               <p className="text-sm text-slate-500">
-                共 {filteredData.length} 条记录
+                共 {filteredRecords.length} 条记录，第 {currentPage}/{totalPages} 页
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                >
                   上一页
                 </Button>
-                <span className="text-sm text-slate-600">第 1 页</span>
-                <Button variant="outline" size="sm" disabled>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className={page === currentPage ? 'bg-blue-500 text-white' : ''}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                >
                   下一页
                 </Button>
               </div>

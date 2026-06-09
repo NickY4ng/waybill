@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Plus, Key, Settings, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, Key, Settings, CheckCircle, XCircle, Eye, EyeOff, Mail, RefreshCw, Loader2 } from 'lucide-react';
 
 // SQL验证函数
 function validateSql(sql: string): { valid: boolean; message: string } {
@@ -62,6 +62,45 @@ interface Account {
   createdBy: string;
   permissionSql: string;
 }
+
+type EmailType = '账号开通邮件' | '账号重置邮件' | '账号即将到期邮件' | '账号到期邮件';
+type EmailStatus = '发送成功' | '发送失败';
+
+interface EmailLog {
+  id: string;
+  accountId: string;
+  type: EmailType;
+  sendTime: string;
+  status: EmailStatus;
+}
+
+const MOCK_EMAIL_LOGS: EmailLog[] = [
+  { id: 'e1', accountId: '1', type: '账号开通邮件', sendTime: '2025-06-01 09:30:15', status: '发送成功' },
+  { id: 'e2', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-03 14:22:08', status: '发送失败' },
+  { id: 'e3', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-06-05 10:00:00', status: '发送成功' },
+  { id: 'e4', accountId: '1', type: '账号到期邮件', sendTime: '2025-05-20 08:15:30', status: '发送成功' },
+  { id: 'e5', accountId: '1', type: '账号重置邮件', sendTime: '2025-06-07 16:45:22', status: '发送失败' },
+  { id: 'e6', accountId: '1', type: '账号开通邮件', sendTime: '2025-04-10 11:20:00', status: '发送成功' },
+  { id: 'e7', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-04-15 09:00:00', status: '发送成功' },
+  { id: 'e8', accountId: '1', type: '账号到期邮件', sendTime: '2025-03-01 13:10:45', status: '发送失败' },
+  { id: 'e9', accountId: '1', type: '账号重置邮件', sendTime: '2025-04-02 15:30:00', status: '发送成功' },
+  { id: 'e10', accountId: '1', type: '账号开通邮件', sendTime: '2025-02-15 10:00:00', status: '发送成功' },
+  { id: 'e11', accountId: '1', type: '账号即将到期邮件', sendTime: '2025-05-28 08:45:00', status: '发送失败' },
+  { id: 'e12', accountId: '1', type: '账号到期邮件', sendTime: '2025-01-20 14:00:00', status: '发送成功' },
+  { id: 'e13', accountId: '2', type: '账号开通邮件', sendTime: '2025-05-15 09:00:00', status: '发送成功' },
+  { id: 'e14', accountId: '2', type: '账号重置邮件', sendTime: '2025-06-02 11:30:00', status: '发送失败' },
+  { id: 'e15', accountId: '2', type: '账号即将到期邮件', sendTime: '2025-06-08 10:00:00', status: '发送成功' },
+  { id: 'e16', accountId: '3', type: '账号开通邮件', sendTime: '2025-03-10 09:00:00', status: '发送成功' },
+  { id: 'e17', accountId: '3', type: '账号到期邮件', sendTime: '2025-06-01 08:00:00', status: '发送失败' },
+  { id: 'e18', accountId: '4', type: '账号开通邮件', sendTime: '2024-01-20 10:00:00', status: '发送成功' },
+  { id: 'e19', accountId: '4', type: '账号到期邮件', sendTime: '2025-03-31 08:00:00', status: '发送失败' },
+  { id: 'e20', accountId: '4', type: '账号重置邮件', sendTime: '2025-02-15 14:30:00', status: '发送成功' },
+  { id: 'e21', accountId: '5', type: '账号开通邮件', sendTime: '2025-01-01 09:00:00', status: '发送成功' },
+  { id: 'e22', accountId: '5', type: '账号到期邮件', sendTime: '2025-04-15 10:00:00', status: '发送失败' },
+  { id: 'e23', accountId: '6', type: '账号开通邮件', sendTime: '2025-02-01 09:00:00', status: '发送成功' },
+  { id: 'e24', accountId: '6', type: '账号即将到期邮件', sendTime: '2025-06-01 10:00:00', status: '发送失败' },
+  { id: 'e25', accountId: '6', type: '账号重置邮件', sendTime: '2025-05-20 16:00:00', status: '发送成功' },
+];
 
 const MOCK_ACCOUNTS: Account[] = [
   { 
@@ -158,6 +197,12 @@ export function AccountManagement() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [decryptedPhones, setDecryptedPhones] = useState<Set<string>>(new Set());
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>(MOCK_EMAIL_LOGS);
+  const [isEmailLogDialogOpen, setIsEmailLogDialogOpen] = useState(false);
+  const [emailLogAccount, setEmailLogAccount] = useState<Account | null>(null);
+  const [emailLogPage, setEmailLogPage] = useState(1);
+  const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
+  const pageSize = 10;
   
   // 新建账号表单
   const [newAccount, setNewAccount] = useState({
@@ -341,10 +386,47 @@ export function AccountManagement() {
       '过期': 'bg-yellow-100 text-yellow-700',
       '禁用': 'bg-gray-100 text-gray-700',
     };
-    
+
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${statusStyles[status]}`}>
         {status}
+      </span>
+    );
+  };
+
+  const openEmailLogDialog = (account: Account) => {
+    setEmailLogAccount(account);
+    setEmailLogPage(1);
+    setIsEmailLogDialogOpen(true);
+  };
+
+  const handleResendEmail = async (log: EmailLog) => {
+    setResendingIds(prev => new Set(prev).add(log.id));
+
+    // 模拟发送：随机 1.5~3 秒延迟，70% 成功率
+    await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500));
+    const success = Math.random() < 0.7;
+
+    setEmailLogs(prev => prev.map(item =>
+      item.id === log.id ? { ...item, status: success ? '发送成功' as EmailStatus : '发送失败' as EmailStatus } : item
+    ));
+    setResendingIds(prev => {
+      const next = new Set(prev);
+      next.delete(log.id);
+      return next;
+    });
+  };
+
+  const getEmailTypeBadge = (type: EmailType) => {
+    const typeStyles: Record<EmailType, string> = {
+      '账号开通邮件': 'bg-blue-100 text-blue-700',
+      '账号重置邮件': 'bg-purple-100 text-purple-700',
+      '账号即将到期邮件': 'bg-orange-100 text-orange-700',
+      '账号到期邮件': 'bg-red-100 text-red-700',
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${typeStyles[type]}`}>
+        {type}
       </span>
     );
   };
@@ -415,6 +497,14 @@ export function AccountManagement() {
                       >
                         <Key className="w-4 h-4 mr-1" />
                         重置密码
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEmailLogDialog(account)}
+                      >
+                        <Mail className="w-4 h-4 mr-1" />
+                        邮件发送
                       </Button>
                     </div>
                   </TableCell>
@@ -661,7 +751,125 @@ export function AccountManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* 重置密码对话框 */}
+      {/* 邮件发送记录对话框 */}
+      <Dialog open={isEmailLogDialogOpen} onOpenChange={setIsEmailLogDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>邮件发送记录 - {emailLogAccount?.customerName}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {(() => {
+              const accountLogs = emailLogs.filter(log => log.accountId === emailLogAccount?.id);
+              const totalPages = Math.max(1, Math.ceil(accountLogs.length / pageSize));
+              const startIndex = (emailLogPage - 1) * pageSize;
+              const pagedLogs = accountLogs.slice(startIndex, startIndex + pageSize);
+
+              return (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>邮件类型</TableHead>
+                        <TableHead>发送时间</TableHead>
+                        <TableHead>发送状态</TableHead>
+                        <TableHead>操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pagedLogs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-slate-400 py-8">
+                            暂无邮件发送记录
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        pagedLogs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell>{getEmailTypeBadge(log.type)}</TableCell>
+                            <TableCell className="text-slate-600">{log.sendTime}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${
+                                log.status === '发送成功'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {log.status}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {log.status === '发送失败' && (
+                                resendingIds.has(log.id) ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled
+                                    className="text-slate-400"
+                                  >
+                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    发送中...
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleResendEmail(log)}
+                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                  >
+                                    <RefreshCw className="w-4 h-4 mr-1" />
+                                    重新发送
+                                  </Button>
+                                )
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+
+                  {/* 分页 */}
+                  {accountLogs.length > pageSize && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <span className="text-sm text-slate-500">
+                        共 {accountLogs.length} 条记录，第 {emailLogPage}/{totalPages} 页
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEmailLogPage(p => Math.max(1, p - 1))}
+                          disabled={emailLogPage <= 1}
+                        >
+                          上一页
+                        </Button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                          <Button
+                            key={page}
+                            variant={page === emailLogPage ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setEmailLogPage(page)}
+                            className={page === emailLogPage ? 'bg-blue-500 text-white' : ''}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEmailLogPage(p => Math.min(totalPages, p + 1))}
+                          disabled={emailLogPage >= totalPages}
+                        >
+                          下一页
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

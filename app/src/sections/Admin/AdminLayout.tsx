@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, BarChart3, LogOut, Truck, Menu, X, Download } from 'lucide-react';
+import { Users, BarChart3, LogOut, Truck, Menu, X, Download, FileText } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  activeTab: 'accounts' | 'usage' | 'download';
-  onTabChange: (tab: 'accounts' | 'usage' | 'download') => void;
+  activeTab: 'accounts' | 'usage' | 'download' | 'logs';
+  onTabChange: (tab: 'accounts' | 'usage' | 'download' | 'logs') => void;
   onLogout: () => void;
 }
 
@@ -15,7 +15,8 @@ export function AdminLayout({ children, activeTab, onTabChange, onLogout }: Admi
   const menuItems = [
     { id: 'accounts' as const, label: '账号管理', icon: Users },
     { id: 'usage' as const, label: '消耗次数', icon: BarChart3 },
-    { id: 'download' as const, label: '数据下载', icon: Download },
+    { id: 'download' as const, label: '模板使用记录', icon: Download },
+    { id: 'logs' as const, label: '操作日志', icon: FileText },
   ];
 
   return (
@@ -76,7 +77,7 @@ export function AdminLayout({ children, activeTab, onTabChange, onLogout }: Admi
         {/* 顶部栏 */}
         <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">
-            {activeTab === 'accounts' ? '账号管理' : activeTab === 'usage' ? '消耗次数统计' : '数据下载'}
+            {activeTab === 'accounts' ? '账号管理' : activeTab === 'usage' ? '消耗次数统计' : activeTab === 'download' ? '模板使用记录' : '操作日志'}
           </h2>
           <Button
             variant="ghost"
