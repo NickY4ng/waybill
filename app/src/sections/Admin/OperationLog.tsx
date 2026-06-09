@@ -70,7 +70,6 @@ export function OperationLog() {
   const pagedLogs = filteredLogs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const modules: string[] = ['全部', '账号管理', '数据查询', '模板管理', '数据下载', '系统配置', '登录认证'];
-  const actions: LogAction[] = ['创建', '编辑', '删除', '查看', '下载', '登录', '退出', '重置密码', '导出', '点击'];
 
   const getActionBadge = (action: LogAction) => {
     const colorMap: Record<LogAction, string> = {
